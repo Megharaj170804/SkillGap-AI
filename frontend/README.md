@@ -1,73 +1,91 @@
-# React + TypeScript + Vite
+# 🎨 Frontend - Skill Gap Platform
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Welcome to the **Frontend** directory of the Skill Gap Platform! This part of the application is responsible for delivering a stunning, highly interactive, and responsive user experience. 
 
-Currently, two official plugins are available:
+Built with modern web technologies, it features a glassmorphic dark theme, deeply integrated Role-Based Access Control (RBAC), and real-time updates via WebSockets.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+## 🛠️ Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Core Framework**: React 19 + TypeScript
+- **Build Tool**: Vite (Lightning fast HMR!)
+- **Routing**: React Router DOM v7 (Supporting protected/guarded routes)
+- **Styling**: Tailwind CSS v4 (Utility-first, responsive, and dark-theme optimized)
+- **Animations**: Framer Motion (Smooth page transitions & micro-components animations)
+- **Data Visualization**: Recharts (Interactive radar, line, and bar charts for analytics)
+- **Networking**: 
+  - Axios (RESTful API calls)
+  - Socket.io-client (Real-time events & notifications)
+- **Notifications**: React Hot Toast
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## 📂 Folder Structure
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```text
+frontend/
+├── public/                 # Static public assets (Favicons, etc.)
+├── src/                    
+│   ├── assets/             # Images, SVGs, global CSS styles
+│   ├── components/         # Reusable UI components (Buttons, Modals, Cards)
+│   ├── context/            # React Contexts (AuthContext, SocketContext)
+│   ├── hooks/              # Custom React Hooks
+│   ├── pages/              # Main view components mapping to routes
+│   │   ├── admin/          # Admin-specific views (User Management, Global Analytics)
+│   │   ├── manager/        # Manager-specific views (Team Insights)
+│   │   ├── employee/       # Employee-specific views (Learning Path, Gap Analysis)
+│   │   └── shared/         # Shared views (Login, Profile, Notifications)
+│   ├── services/           # Axios service instances and API call wrappers
+│   ├── types/              # TypeScript interface & type definitions
+│   ├── App.tsx             # Main Application Component (Routing config)
+│   └── main.tsx            # React DOM injection point
+├── .env                    # Environment variables (Not committed)
+├── vite.config.ts          # Vite bundler configuration
+└── package.json            # Frontend dependencies & scripts
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+---
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## 🚀 Available Scripts
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+In the frontend directory, you can run:
+
+### `npm run dev`
+Starts the Vite development server. Open [http://localhost:5173](http://localhost:5173) to view it in your browser. The page will instantly reload when you make edits.
+
+### `npm run build`
+Builds the app for production into the `dist` folder. It performs TypeScript compilation and Vite bundling for maximum performance and minimal payload size.
+
+### `npm run lint`
+Runs ESLint across the codebase to catch errors and enforce code style rules.
+
+### `npm run preview`
+Locally preview the production build (from the `dist` folder) before deploying.
+
+---
+
+## 🔐 Environment Variables
+
+To properly run the frontend, you need an `.env` file at the root of `frontend/`.
+
+```env
+# The base URL of the backend API
+VITE_API_URL=http://localhost:5000/api
 ```
+
+---
+
+## 🎨 Design System & Aesthetics
+
+- **Theme**: Dark mode by default for reduced eye strain and a modern, premium feel.
+- **Glassmorphism**: Generous use of translucent, frosted-glass effects (e.g., `backdrop-blur`) on cards, panels, and sidebars.
+- **Interactions**: Buttons, list items, and dynamic charts all feature hover states and Framer Motion spring animations to feel highly responsive. 
+
+---
+
+## 🛡️ Routing & Security
+
+The platform utilizes a customized declarative routing system inside `App.tsx`:
+- **`ProtectedRoute`**: Ensures the user has a valid JWT session before accessing internal views.
+- **`RoleGuard`**: Ensures the user's role (`admin`, `manager`, `employee`) matches the required authorization level for specific pages. Unauthorized accesses are cleanly redirected.
