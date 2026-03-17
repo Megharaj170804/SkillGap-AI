@@ -4,6 +4,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import EmployeeCard from '../components/EmployeeCard';
+import EmployeeDashboard from './EmployeeDashboard';
 
 interface TeamMember {
   employeeId: string;
@@ -24,14 +25,10 @@ const Dashboard: React.FC = () => {
   const [error, setError] = useState('');
   const [selectedDept, setSelectedDept] = useState(user?.department || 'Engineering');
 
-  // Employees redirect
-  if (user?.role === 'employee') {
-    navigate('/profile');
-    return null;
-  }
-
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
+    // We only fetch for admins/managers. Employees render EmployeeDashboard instead.
+    if (user?.role === 'employee') return;
+    
     const fetchTeam = async () => {
       setLoading(true);
       setError('');
@@ -45,7 +42,7 @@ const Dashboard: React.FC = () => {
       }
     };
     fetchTeam();
-  }, [selectedDept]);
+  }, [selectedDept, user?.role]);
 
   const chartData = teamData
     .filter((m) => m.gapScore !== null)
@@ -54,6 +51,14 @@ const Dashboard: React.FC = () => {
   const avgScore = teamData.length > 0
     ? Math.round(teamData.filter((m) => m.gapScore !== null).reduce((s, m) => s + (m.gapScore || 0), 0) / teamData.filter((m) => m.gapScore !== null).length)
     : 0;
+
+  if (user?.role === 'employee') {
+    return (
+      <div style={{ padding: '2rem', maxWidth: '1280px', margin: '0 auto' }}>
+        <EmployeeDashboard />
+      </div>
+    );
+  }
 
   return (
     <div style={{ padding: '2rem', maxWidth: '1280px', margin: '0 auto' }}>

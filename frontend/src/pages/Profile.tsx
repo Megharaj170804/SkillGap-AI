@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import SkillBar from '../components/SkillBar';
@@ -25,7 +25,6 @@ interface Analysis {
 
 const Profile: React.FC = () => {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [loading, setLoading] = useState(true);
@@ -51,7 +50,7 @@ const Profile: React.FC = () => {
         setAnalysis(analysisRes.data);
       } catch (err: any) {
         // Analysis might fail if no targetRole
-        if (err.response?.status !== 400) {
+        if (err.response?.status !== 400 && err.response?.status !== 404) {
           setError(err.response?.data?.message || 'Failed to load profile.');
         }
       } finally {
