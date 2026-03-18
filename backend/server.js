@@ -15,6 +15,7 @@ const notificationRoutes = require('./routes/notification.routes');
 const progressRoutes = require('./routes/progress.routes');
 const searchRoutes = require('./routes/search.routes');
 const exportRoutes = require('./routes/export.routes');
+const adminRoutes = require('./routes/admin.routes');
 
 const app = express();
 const server = http.createServer(app);
@@ -35,11 +36,25 @@ app.set('io', io);
 io.on('connection', (socket) => {
   console.log(`Socket connected: ${socket.id}`);
 
-  // Employee joins their personal room
-  socket.on('join_room', ({ employeeId }) => {
-    if (employeeId) {
-      socket.join(`employee_${employeeId}`);
-      console.log(`Socket ${socket.id} joined room: employee_${employeeId}`);
+  // Join a named room (supports both string rooms and object-param rooms)
+  socket.on('join_room', (payload) => {
+    if (typeof payload === 'string') {
+      socket.join(payload);
+      console.log(`Socket ${socket.id} joined room: ${payload}`);
+    } else if (payload?.employeeId) {
+      socket.join(`employee_${payload.employeeId}`);
+      console.log(`Socket ${socket.id} joined room: employee_${payload.employeeId}`);
+    } else if (payload?.room) {
+      socket.join(payload.room);
+      console.log(`Socket ${socket.id} joined room: ${payload.room}`);
+    }
+  });
+
+  // Join user-specific room for notifications
+  socket.on('join_user', ({ userId }) => {
+    if (userId) {
+      socket.join(`user_${userId}`);
+      console.log(`Socket ${socket.id} joined user room: user_${userId}`);
     }
   });
 
@@ -78,6 +93,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/progress', progressRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/export', exportRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date() }));

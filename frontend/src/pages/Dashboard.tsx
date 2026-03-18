@@ -26,6 +26,12 @@ const Dashboard: React.FC = () => {
   const [selectedDept, setSelectedDept] = useState(user?.department || 'Engineering');
 
   useEffect(() => {
+    // Safety net redirect — if admin or manager somehow land on /dashboard, send them home
+    if (user?.role === 'admin') navigate('/admin/overview', { replace: true });
+    else if (user?.role === 'manager') navigate('/manager/overview', { replace: true });
+  }, [user?.role, navigate]);
+
+  useEffect(() => {
     // We only fetch for admins/managers. Employees render EmployeeDashboard instead.
     if (user?.role === 'employee') return;
     

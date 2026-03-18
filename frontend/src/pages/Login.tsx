@@ -19,8 +19,9 @@ const Login: React.FC = () => {
       // Get user from localStorage to redirect by role
       const stored = localStorage.getItem('user');
       const user = stored ? JSON.parse(stored) : null;
-      if (user?.role === 'employee') navigate('/profile');
-      else navigate('/dashboard');
+      if (user?.role === 'admin') navigate('/admin/overview');
+      else if (user?.role === 'manager') navigate('/manager/overview');
+      else navigate('/employee/overview');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Login failed. Please check credentials.');
     } finally {

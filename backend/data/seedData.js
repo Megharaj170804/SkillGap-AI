@@ -5,128 +5,166 @@ const User = require('../models/User');
 const Employee = require('../models/Employee');
 const Role = require('../models/Role');
 
-const seed = async () => {
+const connectDB = async () => {
   try {
     await mongoose.connect(process.env.MONGODB_URI);
-    console.log('Connected to MongoDB for seeding...');
-
-    // Clear existing data
-    await User.deleteMany({});
-    await Employee.deleteMany({});
-    await Role.deleteMany({});
-    console.log('Cleared existing data.');
-
-    // Create roles (skills matrix)
-    const roles = await Role.insertMany([
-      {
-        roleName: 'Senior Developer',
-        requiredSkills: [
-          { skillName: 'Node.js', minimumLevel: 4, priority: 'critical' },
-          { skillName: 'AWS', minimumLevel: 3, priority: 'important' },
-          { skillName: 'System Design', minimumLevel: 4, priority: 'critical' },
-          { skillName: 'Docker', minimumLevel: 3, priority: 'important' },
-          { skillName: 'React', minimumLevel: 4, priority: 'critical' },
-        ],
-      },
-      {
-        roleName: 'ML Engineer',
-        requiredSkills: [
-          { skillName: 'Python', minimumLevel: 4, priority: 'critical' },
-          { skillName: 'TensorFlow', minimumLevel: 4, priority: 'critical' },
-          { skillName: 'Scikit-learn', minimumLevel: 4, priority: 'critical' },
-          { skillName: 'MLOps', minimumLevel: 3, priority: 'important' },
-          { skillName: 'Deep Learning', minimumLevel: 3, priority: 'important' },
-        ],
-      },
-      {
-        roleName: 'Full Stack Developer',
-        requiredSkills: [
-          { skillName: 'React', minimumLevel: 4, priority: 'critical' },
-          { skillName: 'Node.js', minimumLevel: 4, priority: 'critical' },
-          { skillName: 'MongoDB', minimumLevel: 3, priority: 'important' },
-          { skillName: 'REST APIs', minimumLevel: 4, priority: 'critical' },
-          { skillName: 'PostgreSQL', minimumLevel: 3, priority: 'good-to-have' },
-        ],
-      },
-    ]);
-    console.log('Created roles:', roles.map((r) => r.roleName));
-
-    // Hash passwords
-    const hashPwd = (pwd) => bcrypt.hashSync(pwd, 10);
-
-    // Create users
-    const adminUser = await User.create({
-      name: 'Super Admin', email: 'admin@skillgap.com', password: hashPwd('admin123'), role: 'admin',
-    });
-    const managerUser = await User.create({
-      name: 'Raj Manager', email: 'manager@skillgap.com', password: hashPwd('manager123'), role: 'manager', department: 'Engineering',
-    });
-    const rahulUser = await User.create({
-      name: 'Rahul Sharma', email: 'rahul@skillgap.com', password: hashPwd('emp123'), role: 'employee', department: 'Engineering',
-    });
-    const priyaUser = await User.create({
-      name: 'Priya Patel', email: 'priya@skillgap.com', password: hashPwd('emp123'), role: 'employee', department: 'Data Science',
-    });
-    const amitUser = await User.create({
-      name: 'Amit Singh', email: 'amit@skillgap.com', password: hashPwd('emp123'), role: 'employee', department: 'Engineering',
-    });
-
-    // Create employees
-    const rahulEmp = await Employee.create({
-      name: 'Rahul Sharma', email: 'rahul@skillgap.com', department: 'Engineering',
-      currentRole: 'Junior Developer', targetRole: 'Senior Developer',
-      managerId: managerUser._id,
-      skills: [
-        { skillName: 'React', proficiencyLevel: 3, yearsOfExperience: 1 },
-        { skillName: 'JavaScript', proficiencyLevel: 3, yearsOfExperience: 2 },
-        { skillName: 'HTML/CSS', proficiencyLevel: 4, yearsOfExperience: 2 },
-        { skillName: 'Git', proficiencyLevel: 3, yearsOfExperience: 1 },
-      ],
-    });
-
-    const priyaEmp = await Employee.create({
-      name: 'Priya Patel', email: 'priya@skillgap.com', department: 'Data Science',
-      currentRole: 'Data Analyst', targetRole: 'ML Engineer',
-      managerId: managerUser._id,
-      skills: [
-        { skillName: 'Python', proficiencyLevel: 3, yearsOfExperience: 2 },
-        { skillName: 'Excel', proficiencyLevel: 4, yearsOfExperience: 3 },
-        { skillName: 'SQL', proficiencyLevel: 4, yearsOfExperience: 2 },
-        { skillName: 'Power BI', proficiencyLevel: 3, yearsOfExperience: 1 },
-      ],
-    });
-
-    const amitEmp = await Employee.create({
-      name: 'Amit Singh', email: 'amit@skillgap.com', department: 'Engineering',
-      currentRole: 'Frontend Developer', targetRole: 'Full Stack Developer',
-      managerId: managerUser._id,
-      skills: [
-        { skillName: 'React', proficiencyLevel: 4, yearsOfExperience: 2 },
-        { skillName: 'CSS', proficiencyLevel: 4, yearsOfExperience: 3 },
-        { skillName: 'JavaScript', proficiencyLevel: 4, yearsOfExperience: 2 },
-        { skillName: 'Figma', proficiencyLevel: 3, yearsOfExperience: 1 },
-      ],
-    });
-
-    // Link users to employees
-    await User.findByIdAndUpdate(rahulUser._id, { employeeRef: rahulEmp._id });
-    await User.findByIdAndUpdate(priyaUser._id, { employeeRef: priyaEmp._id });
-    await User.findByIdAndUpdate(amitUser._id, { employeeRef: amitEmp._id });
-
-    console.log('Seed data created successfully!');
-    console.log('\nTest credentials:');
-    console.log('  Admin:    admin@skillgap.com   / admin123');
-    console.log('  Manager:  manager@skillgap.com / manager123');
-    console.log('  Employee: rahul@skillgap.com   / emp123');
-    console.log('  Employee: priya@skillgap.com   / emp123');
-    console.log('  Employee: amit@skillgap.com    / emp123');
-
-    await mongoose.disconnect();
-    process.exit(0);
+    console.log('MongoDB connected for seeding...');
   } catch (err) {
-    console.error('Seed error:', err);
+    console.error('Connection error:', err);
     process.exit(1);
   }
 };
 
-seed();
+const ROLES = [
+  {
+    roleName: 'Junior Developer',
+    requiredSkills: [
+      { skillName: 'JavaScript', minimumLevel: 2, priority: 'critical' },
+      { skillName: 'React', minimumLevel: 2, priority: 'critical' },
+      { skillName: 'Git', minimumLevel: 2, priority: 'important' },
+    ],
+  },
+  {
+    roleName: 'Senior Developer',
+    requiredSkills: [
+      { skillName: 'JavaScript', minimumLevel: 4, priority: 'critical' },
+      { skillName: 'React', minimumLevel: 4, priority: 'critical' },
+      { skillName: 'System Design', minimumLevel: 3, priority: 'critical' },
+      { skillName: 'Node.js', minimumLevel: 3, priority: 'important' },
+      { skillName: 'AWS', minimumLevel: 2, priority: 'good-to-have' },
+    ],
+  },
+  {
+    roleName: 'Data Scientist',
+    requiredSkills: [
+      { skillName: 'Python', minimumLevel: 4, priority: 'critical' },
+      { skillName: 'SQL', minimumLevel: 4, priority: 'critical' },
+      { skillName: 'Machine Learning', minimumLevel: 3, priority: 'critical' },
+      { skillName: 'TensorFlow', minimumLevel: 2, priority: 'important' },
+      { skillName: 'Data Visualization', minimumLevel: 3, priority: 'important' },
+    ],
+  },
+];
+
+const EMPLOYEES = [
+  {
+    name: 'Alice Junior',
+    email: 'alice@test.com',
+    currentRole: 'Junior Developer',
+    targetRole: 'Senior Developer',
+    department: 'Engineering',
+    skills: [
+      { skillName: 'JavaScript', proficiencyLevel: 3, yearsOfExperience: 1 },
+      { skillName: 'React', proficiencyLevel: 2, yearsOfExperience: 1 },
+      { skillName: 'Git', proficiencyLevel: 3, yearsOfExperience: 1 },
+    ],
+    projectHistory: [
+      {
+        projectName: 'Internal Dashboard UI',
+        technologiesUsed: ['React', 'CSS', 'JavaScript'],
+        duration: '3 months',
+      },
+    ],
+  },
+  {
+    name: 'Bob Senior',
+    email: 'bob@test.com',
+    currentRole: 'Senior Developer',
+    targetRole: 'Engineering Manager',
+    department: 'Engineering',
+    skills: [
+      { skillName: 'JavaScript', proficiencyLevel: 5, yearsOfExperience: 5 },
+      { skillName: 'React', proficiencyLevel: 5, yearsOfExperience: 4 },
+      { skillName: 'System Design', proficiencyLevel: 4, yearsOfExperience: 3 },
+      { skillName: 'Node.js', proficiencyLevel: 4, yearsOfExperience: 3 },
+      { skillName: 'Leadership', proficiencyLevel: 2, yearsOfExperience: 1 }, // Gap for manager
+    ],
+    projectHistory: [
+      {
+        projectName: 'Payment Gateway Migration',
+        technologiesUsed: ['Node.js', 'AWS', 'System Design'],
+        duration: '6 months',
+      },
+      {
+        projectName: 'Frontend Architecture Revamp',
+        technologiesUsed: ['React', 'JavaScript'],
+        duration: '4 months',
+      },
+    ],
+  },
+  {
+    name: 'Charlie Data',
+    email: 'charlie@test.com',
+    currentRole: 'Data Analyst',
+    targetRole: 'Data Scientist',
+    department: 'Data Science',
+    skills: [
+      { skillName: 'Python', proficiencyLevel: 3, yearsOfExperience: 2 },
+      { skillName: 'SQL', proficiencyLevel: 4, yearsOfExperience: 3 },
+      { skillName: 'Data Visualization', proficiencyLevel: 4, yearsOfExperience: 2 },
+      { skillName: 'Machine Learning', proficiencyLevel: 1, yearsOfExperience: 0 }, // Major gap
+    ],
+    projectHistory: [
+      {
+        projectName: 'Q3 Sales Report Optimization',
+        technologiesUsed: ['SQL', 'Tableau', 'Data Visualization'],
+        duration: '2 months',
+      },
+    ],
+  },
+];
+
+const seedDB = async () => {
+  await connectDB();
+
+  console.log('Clearing existing data...');
+  // Only clear mock users to preserve admin account if needed, but easiest to clear all for clean slate
+  await User.deleteMany({ email: { $in: ['alice@test.com', 'bob@test.com', 'charlie@test.com'] } });
+  await Employee.deleteMany({ email: { $in: ['alice@test.com', 'bob@test.com', 'charlie@test.com'] } });
+  await Role.deleteMany({ roleName: { $in: ['Junior Developer', 'Senior Developer', 'Data Scientist'] } });
+
+  console.log('Seeding Roles...');
+  await Role.insertMany(ROLES);
+
+  console.log('Seeding Employees & Users...');
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash('password123', salt);
+
+  for (const empData of EMPLOYEES) {
+    // 1. Create Employee
+    const employee = await Employee.create(empData);
+    
+    // 2. Create corresponding User account linked to the Employee
+    await User.create({
+      name: employee.name,
+      email: employee.email,
+      password: hashedPassword,
+      role: 'employee',
+      department: employee.department,
+      employeeRef: employee._id,
+    });
+    console.log(`Created: ${employee.name} (${employee.email}) - target: ${employee.targetRole}`);
+  }
+
+  // Pre-hash password for old employee and admin to restore them if they got dropped
+  // Let's also restore the super admin just in case they were deleted.
+  try {
+      const adminExists = await User.findOne({ email: 'admin@skillgap.com' });
+      if (!adminExists) {
+        await User.create({
+          name: 'Super Admin', email: 'admin@skillgap.com', password: hashedPassword, role: 'admin',
+        });
+        console.log(`Created: Super Admin (admin@skillgap.com)`);
+      }
+  } catch(e) {}
+
+  console.log('\n✅ Database seeded successfully!');
+  console.log('You can login with the following credentials (Password for all: password123):');
+  console.log('- alice@test.com (Junior -> Senior Developer)');
+  console.log('- bob@test.com (Senior -> Manager)');
+  console.log('- charlie@test.com (Analyst -> Data Scientist)');
+
+  process.exit();
+};
+
+seedDB();

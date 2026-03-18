@@ -26,7 +26,16 @@ const employeeSchema = new mongoose.Schema({
   aiCareerAdvice: { type: Object, default: null },
   lastAnalysisAt: { type: Date, default: null },
   overallProgress: { type: Number, default: 0, min: 0, max: 100 },
+  // Computed readiness score (0-100)
+  gapScore: { type: Number, default: 0, min: 0, max: 100 },
+  lastActive: { type: Date, default: Date.now },
   createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
 });
+
+// Indexes for query performance
+employeeSchema.index({ department: 1 });
+employeeSchema.index({ gapScore: 1 });
+employeeSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.model('Employee', employeeSchema);
