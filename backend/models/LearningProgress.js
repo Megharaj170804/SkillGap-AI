@@ -5,11 +5,13 @@ const learningProgressSchema = new mongoose.Schema({
   skillName: { type: String, required: true },
   targetLevel: { type: Number, min: 1, max: 5 },
   currentLevel: { type: Number, min: 0, max: 5 },
-  completedCourses: [
+  completedResources: [
     {
-      courseName: { type: String },
+      title: { type: String },
+      platform: { type: String },
       completedAt: { type: Date },
       hoursSpent: { type: Number, default: 0 },
+      weekNumber: { type: Number }
     },
   ],
   weeklyGoalHours: { type: Number, default: 5 },

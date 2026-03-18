@@ -117,6 +117,7 @@ const App: React.FC = () => {
             <Route path="career" element={<Suspense fallback={<div className="spinner" style={{margin:'4rem auto'}} />}> <EmployeeCareer /> </Suspense>} />
             <Route path="achievements" element={<Suspense fallback={<div className="spinner" style={{margin:'4rem auto'}} />}> <EmployeeAchievements /> </Suspense>} />
             <Route path="settings" element={<Suspense fallback={<div className="spinner" style={{margin:'4rem auto'}} />}> <EmployeeSettings /> </Suspense>} />
+            <Route path="project-mapper" element={<ProjectSkillMapper />} />
           </Route>
 
           {/* Legacy / Shared Routes - wrapped with standard Navbar */}
@@ -135,7 +136,6 @@ const App: React.FC = () => {
                 <Route path="/ai/learning-path/:id" element={<ProtectedRoute><AILearningPath /></ProtectedRoute>} />
                 <Route path="/ai/career-advice/:id" element={<ProtectedRoute><CareerAdvice /></ProtectedRoute>} />
                 <Route path="/ai/team-insights" element={<ProtectedRoute><RoleGuard allowedRoles={['admin', 'manager']}><TeamInsights /></RoleGuard></ProtectedRoute>} />
-                <Route path="/project-mapper" element={<ProtectedRoute><ProjectSkillMapper /></ProtectedRoute>} />
                 <Route path="/analytics" element={<ProtectedRoute><RoleGuard allowedRoles={['admin']}><Analytics /></RoleGuard></ProtectedRoute>} />
                 <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
                 

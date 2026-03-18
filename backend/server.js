@@ -16,6 +16,8 @@ const progressRoutes = require('./routes/progress.routes');
 const searchRoutes = require('./routes/search.routes');
 const exportRoutes = require('./routes/export.routes');
 const adminRoutes = require('./routes/admin.routes');
+const managerRoutes = require('./routes/manager.routes');
+const achievementRoutes = require('./routes/achievement.routes');
 
 const app = express();
 const server = http.createServer(app);
@@ -58,12 +60,24 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Manager joins department room
-  socket.on('join_department', ({ department }) => {
+  // Manager joins room and department room
+  socket.on('join_manager_room', ({ managerId, department }) => {
+    if (managerId) {
+      socket.join(`manager_${managerId}`);
+      console.log(`Socket ${socket.id} joined manager room: manager_${managerId}`);
+    }
     if (department) {
       socket.join(`dept_${department}`);
       console.log(`Socket ${socket.id} joined room: dept_${department}`);
     }
+  });
+  
+  // Manager leaves manager and department rooms
+  socket.on('leave_manager_room', () => {
+    // Socket.io automatically handles cleanup on disconnect, but we can allow explicit leave
+    // We would need to store the user's rooms on the socket instance if we want to leave precisely,
+    // or the client can disconnect the socket completely when unmounting.
+    console.log(`Socket ${socket.id} requested to leave manager rooms.`);
   });
 
   socket.on('disconnect', () => {
@@ -86,6 +100,7 @@ app.use(cookieParser());
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/employees', employeeRoutes);
+app.use('/api/employee', employeeRoutes);
 app.use('/api/roles', roleRoutes);
 app.use('/api/analysis', analysisRoutes);
 app.use('/api/ai', aiRoutes);
@@ -94,6 +109,8 @@ app.use('/api/progress', progressRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/export', exportRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/manager', managerRoutes);
+app.use('/api/achievements', achievementRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date() }));

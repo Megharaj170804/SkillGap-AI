@@ -73,21 +73,8 @@ const Navbar: React.FC = () => {
           <span style={{ fontWeight: 300, fontSize: '1.1rem', color: '#6366f1' }} className="hide-on-mobile">Platform</span>
         </Link>
 
-        {/* Desktop Nav Links */}
+        {/* Desktop Nav Links (Removed to rely on persona sidebars) */}
         <div className="desktop-nav" style={{ display: 'flex', gap: '0.25rem', alignItems: 'center', flex: 1, justifyContent: 'center' }}>
-          {user?.role === 'employee' && (
-            <>
-              <NavLink to="/dashboard">My Dashboard</NavLink>
-              <NavLink to="/profile">My Profile</NavLink>
-              <NavLink to="/project-mapper">Project Mapper</NavLink>
-            </>
-          )}
-          {user?.role === 'admin' && (
-            <span style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: 600 }}>Admin Workspace Active</span>
-          )}
-          {user?.role === 'manager' && (
-            <span style={{ color: '#94a3b8', fontSize: '0.85rem', fontWeight: 600 }}>Manager Workspace Active</span>
-          )}
         </div>
 
         {/* Right area */}
@@ -123,19 +110,7 @@ const Navbar: React.FC = () => {
       {/* Mobile Navigation Menu */}
       {mobileMenuOpen && (
         <div style={{ padding: '1rem', borderTop: '1px solid rgba(99, 102, 241, 0.2)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          {user?.role === 'employee' && (
-            <>
-              <NavLink to="/dashboard" onClick={() => setMobileMenuOpen(false)}>My Dashboard</NavLink>
-              <NavLink to="/profile" onClick={() => setMobileMenuOpen(false)}>My Profile</NavLink>
-              <NavLink to="/project-mapper" onClick={() => setMobileMenuOpen(false)}>Project Mapper</NavLink>
-            </>
-          )}
-          {user?.role === 'admin' && (
-            <span style={{ color: '#94a3b8', fontSize: '0.85rem', padding: '0.5rem' }}>Use sidebar for Admin Navigation</span>
-          )}
-          {user?.role === 'manager' && (
-            <span style={{ color: '#94a3b8', fontSize: '0.85rem', padding: '0.5rem' }}>Use sidebar for Manager Navigation</span>
-          )}
+          <span style={{ color: '#94a3b8', fontSize: '0.85rem', padding: '0.5rem' }}>Use sidebar for Navigation</span>
         </div>
       )}
 

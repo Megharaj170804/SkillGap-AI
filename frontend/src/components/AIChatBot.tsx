@@ -18,12 +18,19 @@ const SUGGESTIONS = [
 const AIChatBot: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([{ role: 'ai', text: 'Hi! I\'m your AI learning assistant. Ask me anything about your career or skills! 🚀' }]);
+  
+  const [messages, setMessages] = useState<Message[]>(() => {
+    const saved = localStorage.getItem('ai_chat_history');
+    if (saved) return JSON.parse(saved);
+    return [{ role: 'ai', text: 'Hi! I\'m your AI learning assistant. Ask me anything about your career or skills! 🚀' }];
+  });
+  
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    localStorage.setItem('ai_chat_history', JSON.stringify(messages));
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
@@ -33,17 +40,27 @@ const AIChatBot: React.FC = () => {
     const msg = (text || input).trim();
     if (!msg) return;
     setInput('');
-    setMessages((prev) => [...prev, { role: 'user', text: msg }]);
+    
+    const contextHistory = messages.slice(-10); // Send last 10 messages
+    const nextMessages = [...messages, { role: 'user', text: msg } as Message];
+    setMessages(nextMessages);
+    
     setLoading(true);
     try {
       const employeeId = (user as any)?.employeeRef;
-      const res = await api.post('/ai/chat', { message: msg, employeeId });
+      const res = await api.post('/ai/chat', { message: msg, employeeId, history: contextHistory });
       setMessages((prev) => [...prev, { role: 'ai', text: res.data.reply }]);
     } catch {
       setMessages((prev) => [...prev, { role: 'ai', text: 'Sorry, I\'m having trouble responding right now. Please try again!' }]);
     } finally {
       setLoading(false);
     }
+  };
+
+  const clearChat = () => {
+    const initial = [{ role: 'ai', text: 'Hi! I\'m your AI learning assistant. Ask me anything about your career or skills! 🚀' } as Message];
+    setMessages(initial);
+    localStorage.removeItem('ai_chat_history');
   };
 
   return (
@@ -81,7 +98,7 @@ const AIChatBot: React.FC = () => {
             }}
           >
             {/* Header */}
-            <div style={{ padding: '1rem 1.25rem', background: 'linear-gradient(135deg, rgba(99,102,241,0.3), rgba(139,92,246,0.3))', borderBottom: '1px solid rgba(99,102,241,0.2)' }}>
+            <div style={{ padding: '1rem 1.25rem', background: 'linear-gradient(135deg, rgba(99,102,241,0.3), rgba(139,92,246,0.3))', borderBottom: '1px solid rgba(99,102,241,0.2)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <span style={{ fontSize: '1.2rem' }}>🤖</span>
                 <div>
@@ -89,6 +106,13 @@ const AIChatBot: React.FC = () => {
                   <p style={{ color: '#94a3b8', fontSize: '0.7rem', margin: 0 }}>✨ Powered by Gemini AI</p>
                 </div>
               </div>
+              <button 
+                onClick={clearChat}
+                style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#94a3b8', fontSize: '0.7rem', padding: '0.2rem 0.5rem', borderRadius: 6, cursor: 'pointer' }}
+                title="Clear Chat History"
+              >
+                Clear
+              </button>
             </div>
 
             {/* Messages */}
@@ -121,9 +145,11 @@ const AIChatBot: React.FC = () => {
 
             {/* Suggestions */}
             {messages.length <= 1 && (
-              <div style={{ padding: '0 1rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+              <div style={{ padding: '0 1rem', display: 'flex', flexDirection: 'column', gap: '0.4rem', marginBottom: '1rem' }}>
                 {SUGGESTIONS.map((s) => (
-                  <button key={s} onClick={() => send(s)} style={{ textAlign: 'left', padding: '0.4rem 0.75rem', borderRadius: 10, border: '1px solid rgba(99,102,241,0.25)', background: 'rgba(99,102,241,0.08)', color: '#94a3b8', cursor: 'pointer', fontSize: '0.78rem' }}>
+                  <button key={s} onClick={() => send(s)} style={{ textAlign: 'left', padding: '0.5rem 0.75rem', borderRadius: 10, border: '1px solid rgba(99,102,241,0.25)', background: 'rgba(99,102,241,0.08)', color: '#a5b4fc', cursor: 'pointer', fontSize: '0.8rem', transition: 'background 0.2s', outline: 'none' }}
+                   onMouseOver={e => e.currentTarget.style.background = 'rgba(99,102,241,0.15)'}
+                   onMouseOut={e => e.currentTarget.style.background = 'rgba(99,102,241,0.08)'}>
                     {s}
                   </button>
                 ))}

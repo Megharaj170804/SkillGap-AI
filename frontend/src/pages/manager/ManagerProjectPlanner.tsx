@@ -1,15 +1,86 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-
-const projects = [
-  { id: '1', name: 'E-Commerce Platform Rebuild', deadline: 'May 30, 2025', requiredSkills: ['React', 'Node.js', 'AWS', 'Docker', 'TypeScript'], members: [{ name: 'Jane Smith', coverage: [95, 60, 40, 55, 90] }, { name: 'John Doe', coverage: [90, 40, 20, 30, 85] }] },
-  { id: '2', name: 'Data Pipeline Automation', deadline: 'Apr 15, 2025', requiredSkills: ['Python', 'SQL', 'Spark', 'Docker', 'Airflow'], members: [{ name: 'Bob Wilson', coverage: [75, 85, 30, 60, 20] }, { name: 'Alice Ray', coverage: [45, 70, 15, 80, 25] }] },
-];
+import api from '../../services/api';
+import toast from 'react-hot-toast';
 
 const ManagerProjectPlanner: React.FC = () => {
+  const [projects, setProjects] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
+  const [generatingPlan, setGeneratingPlan] = useState<string | null>(null);
+  const [newProject, setNewProject] = useState({ name: '', deadline: '', requiredSkills: '' });
+
+  const fetchProjects = async () => {
+    try {
+      const res = await api.get('/manager/projects');
+      setProjects(res.data);
+    } catch (err) {
+      console.error('Failed to load projects', err);
+      toast.error('Failed to load projects');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProjects();
+  }, []);
+
+  const generateTrainingPlan = async (projectId: string) => {
+    setGeneratingPlan(projectId);
+    try {
+      const res = await api.post(`/ai/project-training-plan/${projectId}`);
+      setProjects(projects.map(p => p._id === projectId ? { ...p, aiAnalysis: res.data.plan } : p));
+      toast.success('Training Plan generated!');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to generate AI plan. Please ensure Gemini API is up.');
+    } finally {
+      setGeneratingPlan(null);
+    }
+  };
+
+  const handleCreateProject = async () => {
+    if (!newProject.name || !newProject.deadline || !newProject.requiredSkills) {
+      return toast.error('Please fill in all fields');
+    }
+    
+    // Parse comma separated skills into backend format
+    const reqSkills = newProject.requiredSkills.split(',').map(s => ({
+      skillName: s.trim(),
+      level: 3, // Default required level
+      priority: 'high'
+    })).filter(s => s.skillName);
+
+    try {
+      await api.post('/manager/projects', {
+        name: newProject.name,
+        description: 'New Project',
+        deadline: newProject.deadline,
+        requiredSkills: reqSkills,
+        assignedEmployees: [] // Can be updated later or auto-assigned
+      });
+      toast.success('Project created');
+      setShowCreate(false);
+      setNewProject({ name: '', deadline: '', requiredSkills: '' });
+      fetchProjects();
+    } catch (err) {
+      console.error('Failed to create project', err);
+      toast.error('Failed to create project');
+    }
+  };
 
   const coveragColor = (pct: number) => pct >= 70 ? '#10b981' : pct >= 40 ? '#f59e0b' : '#ef4444';
+
+  const getMemberCoverageForSkill = (member: any, reqSkill: any) => {
+    if (!member.skills) return 0;
+    const empSkill = member.skills.find((s: any) => s.name?.toLowerCase() === reqSkill.skillName?.toLowerCase());
+    if (!empSkill) return 0;
+    const reqLevel = reqSkill.level || 3; // fallback
+    return Math.round(Math.min(1, empSkill.level / reqLevel) * 100);
+  };
+
+  if (loading) return <div style={{ padding: '2rem', color: '#94a3b8' }}>Loading projects...</div>;
 
   return (
     <div style={{ paddingBottom: '2rem' }}>
@@ -22,14 +93,25 @@ const ManagerProjectPlanner: React.FC = () => {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-        {projects.map((project, pi) => (
-          <motion.div key={project.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: pi * 0.1 }} className="glass-card" style={{ padding: '1.75rem' }}>
+        {projects.length === 0 ? (
+          <p style={{ color: '#94a3b8' }}>No active projects. Create one to start planning.</p>
+        ) : projects.map((project, pi) => (
+          <motion.div key={project._id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: pi * 0.1 }} className="glass-card" style={{ padding: '1.75rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
               <div>
                 <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: '#f1f5f9' }}>{project.name}</h3>
-                <div style={{ color: '#94a3b8', fontSize: '0.85rem', marginTop: '0.3rem' }}>📅 Deadline: <span style={{ color: '#f59e0b', fontWeight: 600 }}>{project.deadline}</span></div>
+                <div style={{ color: '#94a3b8', fontSize: '0.85rem', marginTop: '0.3rem' }}>
+                  📅 Deadline: <span style={{ color: '#f59e0b', fontWeight: 600 }}>{new Date(project.deadline).toLocaleDateString()}</span> ({project.daysUntilDeadline} days away)
+                </div>
               </div>
-              <button className="btn-secondary" style={{ fontSize: '0.8rem', padding: '0.4rem 0.9rem' }}>🤖 Generate Training Plan</button>
+              <button 
+                className="btn-secondary" 
+                style={{ fontSize: '0.8rem', padding: '0.4rem 0.9rem' }} 
+                onClick={() => generateTrainingPlan(project._id)}
+                disabled={generatingPlan === project._id}
+              >
+                {generatingPlan === project._id ? '⏳ Generating...' : '🤖 Generate Training Plan'}
+              </button>
             </div>
 
             <div style={{ overflowX: 'auto' }}>
@@ -37,19 +119,31 @@ const ManagerProjectPlanner: React.FC = () => {
                 <thead>
                   <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
                     <th style={{ padding: '0.75rem', textAlign: 'left', color: '#94a3b8', fontWeight: 600 }}>Team Member</th>
-                    {project.requiredSkills.map(s => (
-                      <th key={s} style={{ padding: '0.5rem', textAlign: 'center', color: '#94a3b8', fontWeight: 600, whiteSpace: 'nowrap' }}>{s}</th>
+                    {project.requiredSkills.map((s: any) => (
+                      <th key={s._id || s.skillName} style={{ padding: '0.5rem', textAlign: 'center', color: '#94a3b8', fontWeight: 600, whiteSpace: 'nowrap' }}>{s.skillName}</th>
                     ))}
                     <th style={{ padding: '0.5rem', textAlign: 'center', color: '#94a3b8', fontWeight: 600 }}>Readiness</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {project.members.map(member => {
-                    const avg = Math.round(member.coverage.reduce((a, c) => a + c, 0) / member.coverage.length);
+                  {project.assignedEmployees.length === 0 ? (
+                    <tr><td colSpan={project.requiredSkills.length + 2} style={{ padding: '1rem', color: '#94a3b8', textAlign: 'center' }}>No employees assigned to this project yet.</td></tr>
+                  ) : project.assignedEmployees.map((member: any) => {
+                    // Compute coverage array
+                    const coverage = project.requiredSkills.map((rs: any) => getMemberCoverageForSkill(member, rs));
+                    const avg = coverage.length > 0 ? Math.round(coverage.reduce((a: number, c: number) => a + c, 0) / coverage.length) : 0;
+                    
                     return (
-                      <tr key={member.name} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                        <td style={{ padding: '0.75rem', fontWeight: 600, color: '#f1f5f9', whiteSpace: 'nowrap' }}>{member.name}</td>
-                        {member.coverage.map((pct, i) => (
+                      <tr key={member._id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                        <td style={{ padding: '0.75rem', fontWeight: 600, color: '#f1f5f9', whiteSpace: 'nowrap' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem' }}>
+                              {member.avatar || member.name.charAt(0)}
+                            </div>
+                            {member.name}
+                          </div>
+                        </td>
+                        {coverage.map((pct: number, i: number) => (
                           <td key={i} style={{ padding: '0.5rem', textAlign: 'center' }}>
                             <div style={{ width: 38, height: 38, borderRadius: 6, background: pct >= 70 ? 'rgba(16,185,129,0.15)' : pct >= 40 ? 'rgba(245,158,11,0.15)' : 'rgba(239,68,68,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto', color: coveragColor(pct), fontWeight: 700, fontSize: '0.72rem' }}>{pct}%</div>
                           </td>
@@ -63,28 +157,82 @@ const ManagerProjectPlanner: React.FC = () => {
                 </tbody>
               </table>
             </div>
+            <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                Overall Project Readiness: <span style={{ color: coveragColor(project.skillCoveragePercent), fontWeight: 'bold' }}>{project.skillCoveragePercent}%</span>
+              </div>
+              <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                Risk Level: <span style={{ color: project.riskLevel === 'high' ? '#ef4444' : project.riskLevel === 'medium' ? '#f59e0b' : '#10b981', fontWeight: 'bold', textTransform: 'capitalize' }}>{project.riskLevel}</span>
+              </div>
+            </div>
+            
+            {project.aiAnalysis && (
+              <div style={{ marginTop: '1.5rem', background: 'rgba(99, 102, 241, 0.08)', border: '1px solid rgba(99, 102, 241, 0.3)', padding: '1.25rem', borderRadius: '12px' }}>
+                <h4 style={{ margin: '0 0 1rem 0', color: '#a5b4fc', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>📊</span> AI Training Plan Insight
+                </h4>
+                
+                <p style={{ margin: '0 0 1rem 0', color: '#e2e8f0', fontSize: '0.9rem', lineHeight: 1.6 }}>
+                  {project.aiAnalysis.projectReadiness}
+                </p>
+
+                {project.aiAnalysis.criticalGaps?.length > 0 && (
+                  <div style={{ marginBottom: '1rem' }}>
+                    <h5 style={{ margin: '0 0 0.5rem 0', color: '#f87171', fontSize: '0.85rem', textTransform: 'uppercase' }}>Critical Gaps</h5>
+                    <ul style={{ margin: 0, paddingLeft: '1.2rem', color: '#fca5a5', fontSize: '0.85rem' }}>
+                      {project.aiAnalysis.criticalGaps.map((g: string, i: number) => <li key={i}>{g}</li>)}
+                    </ul>
+                  </div>
+                )}
+
+                {project.aiAnalysis.employeePlans?.length > 0 && (
+                  <div>
+                    <h5 style={{ margin: '0 0 0.5rem 0', color: '#34d399', fontSize: '0.85rem', textTransform: 'uppercase' }}>Recommended Actions Per Member</h5>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      {project.aiAnalysis.employeePlans.map((ep: any, i: number) => (
+                        <div key={i} style={{ background: 'rgba(0,0,0,0.2)', padding: '0.75rem', borderRadius: '8px', fontSize: '0.85rem' }}>
+                          <strong style={{ color: '#f1f5f9' }}>{ep.employeeName}</strong>
+                          <div style={{ color: '#94a3b8', marginTop: '0.25rem' }}>Focus: {ep.focusAreas?.join(', ')}</div>
+                          <div style={{ color: '#60a5fa', marginTop: '0.25rem' }}>Courses: {ep.recommendedCourses?.join(', ')}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            
           </motion.div>
         ))}
       </div>
 
       {showCreate && (
-        <>
-          <div onClick={() => setShowCreate(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 300 }} />
-          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-            style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 480, maxWidth: '95vw', background: '#1a1a2e', border: '1px solid rgba(99, 102, 241, 0.3)', borderRadius: '20px', padding: '2rem', zIndex: 301 }}>
-            <h2 style={{ margin: '0 0 1.5rem 0', fontWeight: 700, color: '#f1f5f9' }}>Create New Project</h2>
-            {['Project Name', 'Deadline', 'Required Skills (comma-separated)'].map(f => (
-              <div key={f} style={{ marginBottom: '1rem' }}>
-                <label style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 600, display: 'block', marginBottom: '0.4rem' }}>{f.toUpperCase()}</label>
-                <input type="text" placeholder={`Enter ${f}...`} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '0.7rem 1rem', color: '#f1f5f9', outline: 'none', boxSizing: 'border-box' }} />
-              </div>
-            ))}
-            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
-              <button onClick={() => setShowCreate(false)} className="btn-secondary">Cancel</button>
-              <button onClick={() => setShowCreate(false)} className="btn-primary">Create Project</button>
+        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}
+          className="glass-card" style={{ marginTop: '2rem', padding: '2rem', border: '1px solid rgba(99, 102, 241, 0.3)' }}>
+          <h2 style={{ margin: '0 0 1.5rem 0', fontWeight: 700, color: '#f1f5f9' }}>Create New Project</h2>
+          
+          <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
+            <div style={{ flex: 1, minWidth: '250px' }}>
+              <label style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 600, display: 'block', marginBottom: '0.4rem' }}>PROJECT NAME</label>
+              <input type="text" value={newProject.name} onChange={e => setNewProject({...newProject, name: e.target.value})} placeholder="e.g. Platform Migration" style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '0.7rem 1rem', color: '#f1f5f9', outline: 'none', boxSizing: 'border-box' }} />
             </div>
-          </motion.div>
-        </>
+
+            <div style={{ flex: 1, minWidth: '200px' }}>
+              <label style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 600, display: 'block', marginBottom: '0.4rem' }}>DEADLINE</label>
+              <input type="date" value={newProject.deadline} onChange={e => setNewProject({...newProject, deadline: e.target.value})} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '0.7rem 1rem', color: '#f1f5f9', outline: 'none', boxSizing: 'border-box', colorScheme: 'dark' }} />
+            </div>
+          </div>
+
+          <div style={{ marginTop: '1.5rem' }}>
+            <label style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 600, display: 'block', marginBottom: '0.4rem' }}>REQUIRED SKILLS (COMMA-SEPARATED)</label>
+            <input type="text" value={newProject.requiredSkills} onChange={e => setNewProject({...newProject, requiredSkills: e.target.value})} placeholder="e.g. React, Node.js, AWS" style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '0.7rem 1rem', color: '#f1f5f9', outline: 'none', boxSizing: 'border-box' }} />
+          </div>
+
+          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-start', marginTop: '1.5rem' }}>
+            <button onClick={handleCreateProject} className="btn-primary">Create Project</button>
+            <button onClick={() => setShowCreate(false)} className="btn-secondary">Cancel</button>
+          </div>
+        </motion.div>
       )}
     </div>
   );

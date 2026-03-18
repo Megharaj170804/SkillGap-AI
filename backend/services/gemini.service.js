@@ -29,6 +29,20 @@ Return ONLY a valid JSON array with 12 objects, no markdown, no explanation.`;
   }
 };
 
+const generateCustomLearningPath = async (prompt) => {
+  try {
+    const customModel = genAI.getGenerativeModel({ 
+      model: 'gemini-2.5-flash',
+      generationConfig: { maxOutputTokens: 8000 }
+    });
+    const result = await customModel.generateContent(prompt);
+    return result.response.text();
+  } catch (err) {
+    console.error('Gemini generateCustomLearningPath error:', err.message);
+    return null;
+  }
+};
+
 // 2. Generate career advice
 const generateCareerAdvice = async (employeeData) => {
   try {
@@ -82,13 +96,47 @@ Identify and return ONLY valid JSON (no markdown):
   }
 };
 
-// 5. AI chat assistant
-const aiChatAssistant = async (userMessage, employeeContext) => {
+// 4.5. Generate Project Training Plan
+const generateProjectTrainingPlan = async (projectData) => {
   try {
+    const prompt = `You are a technical project manager and learning coach. 
+We have a project: "${projectData.name}" with a deadline in ${projectData.daysUntilDeadline} days.
+The required skills are: ${JSON.stringify(projectData.requiredSkills)}
+Here are the assigned employees and their current skills: ${JSON.stringify(projectData.assignedEmployees)}
+
+Based on the skill gaps (where an employee's proficiencyLevel is lower than the project's required level), generate a focused training plan.
+Return ONLY valid JSON (no markdown):
+{
+  "projectReadiness": "Short summary of overall project skill readiness",
+  "criticalGaps": ["gap 1 string", "gap 2 string"],
+  "employeePlans": [
+    {
+      "employeeName": "Name",
+      "recommendedCourses": ["Course A", "Course B"],
+      "focusAreas": ["Area 1", "Area 2"]
+    }
+  ]
+}`;
+    const result = await model.generateContent(prompt);
+    const text = result.response.text();
+    return parseJSON(text);
+  } catch (err) {
+    console.error('Gemini generateProjectTrainingPlan error:', err.message);
+    return { error: 'AI temporarily unavailable. Please try again later.' };
+  }
+};
+
+// 5. AI chat assistant
+const aiChatAssistant = async (userMessage, employeeContext, history = []) => {
+  try {
+    const historyText = history.map(m => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.text}`).join('\n');
     const prompt = `You are an AI learning assistant for a skill development platform.
 Employee context: ${JSON.stringify(employeeContext)}
+Recent conversation history:
+${historyText}
+
 User message: "${userMessage}"
-Answer helpfully, suggest learning resources, give career advice. Keep response under 150 words. Be encouraging and specific.`;
+Answer helpfully, suggest learning resources, give career advice. Keep response under 150 words. Be encouraging and specific. Do NOT mention that you are an AI or repeat yourself unnecessarily.`;
     const result = await model.generateContent(prompt);
     return result.response.text();
   } catch (err) {
@@ -99,8 +147,10 @@ Answer helpfully, suggest learning resources, give career advice. Keep response 
 
 module.exports = {
   generateLearningPath,
+  generateCustomLearningPath,
   generateCareerAdvice,
   generateSkillRecommendations,
   generateTeamInsights,
+  generateProjectTrainingPlan,
   aiChatAssistant,
 };

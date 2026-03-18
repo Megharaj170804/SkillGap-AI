@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 interface SearchResult {
   employees: { _id: string; name: string; currentRole: string; department: string }[];
@@ -9,6 +10,7 @@ interface SearchResult {
 }
 
 const GlobalSearch: React.FC = () => {
+  const { user } = useAuth();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult | null>(null);
   const [open, setOpen] = useState(false);
@@ -21,12 +23,17 @@ const GlobalSearch: React.FC = () => {
     if (q.length < 2) { setResults(null); return; }
     setLoading(true);
     try {
-      const res = await api.get(`/search?q=${encodeURIComponent(q)}`);
+      let url = `/search?q=${encodeURIComponent(q)}`;
+      if (user && user.role) {
+        url += `&scope=${encodeURIComponent(user.role)}`;
+        if (user.department) url += `&department=${encodeURIComponent(user.department)}`;
+      }
+      const res = await api.get(url);
       setResults(res.data);
     } catch { /* silent */ } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     clearTimeout(timer.current);

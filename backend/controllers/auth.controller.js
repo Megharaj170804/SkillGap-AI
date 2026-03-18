@@ -57,7 +57,7 @@ const login = async (req, res) => {
 
     return res.status(200).json({
       token,
-      user: { id: user._id, name: user.name, email: user.email, role: user.role, department: user.department },
+      user: { id: user._id, name: user.name, email: user.email, role: user.role, department: user.department, employeeRef: user.employeeRef },
     });
   } catch (err) {
     if (process.env.NODE_ENV !== 'production') console.error(err);
@@ -83,4 +83,24 @@ const getMe = async (req, res) => {
   }
 };
 
-module.exports = { register, login, logout, getMe };
+const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const user = await User.findById(req.user.id);
+    
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) return res.status(400).json({ message: 'Incorrect current password' });
+    
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+    await user.save();
+    
+    res.json({ message: 'Password updated successfully' });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+module.exports = { register, login, logout, getMe, changePassword };

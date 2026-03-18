@@ -23,8 +23,14 @@ const employeeSchema = new mongoose.Schema({
   targetRole: { type: String },
   // AI-enhanced fields
   aiLearningPath: { type: Array, default: [] },
+  learningPreferences: {
+    hoursPerWeek: { type: Number, default: 10 },
+    focusAreas: { type: [String], default: [] },
+    learningStyle: { type: String, default: 'Video-focused' }
+  },
   aiCareerAdvice: { type: Object, default: null },
   lastAnalysisAt: { type: Date, default: null },
+  savedProjectAnalyses: { type: Array, default: [] },
   overallProgress: { type: Number, default: 0, min: 0, max: 100 },
   // Computed readiness score (0-100)
   gapScore: { type: Number, default: 0, min: 0, max: 100 },

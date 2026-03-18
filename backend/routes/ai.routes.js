@@ -3,11 +3,13 @@ const router = express.Router();
 const { verifyToken } = require('../middleware/auth.middleware');
 const { authorizeRoles } = require('../middleware/role.middleware');
 const rateLimit = require('express-rate-limit');
+
 const {
   generateLearningPath,
   generateCareerAdvice,
   generateSkillRecommendations,
   generateTeamInsights,
+  generateProjectTrainingPlan,
   aiChat,
 } = require('../controllers/ai.controller');
 
@@ -25,6 +27,7 @@ router.post('/learning-path/:employeeId', verifyToken, aiLimiter, generateLearni
 router.post('/career-advice/:employeeId', verifyToken, aiLimiter, generateCareerAdvice);
 router.post('/skill-recommendations', verifyToken, aiLimiter, generateSkillRecommendations);
 router.post('/team-insights/:department', verifyToken, authorizeRoles('admin', 'manager'), aiLimiter, generateTeamInsights);
+router.post('/project-training-plan/:projectId', verifyToken, authorizeRoles('admin', 'manager'), aiLimiter, generateProjectTrainingPlan);
 router.post('/chat', verifyToken, aiLimiter, aiChat);
 
 module.exports = router;
