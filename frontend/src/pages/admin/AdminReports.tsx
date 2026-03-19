@@ -66,26 +66,12 @@ const AdminReports: React.FC = () => {
       action: () => downloadFile('critical-csv', `${API_URL}/export/employees/csv?filter=critical`, `critical-gaps-${today}.csv`),
     },
     {
-      id: 'analytics-json',
-      name: 'Platform Analytics Data',
-      desc: 'Aggregated analytics: skill gaps, department breakdown, role distribution.',
+      id: 'analytics-pdf',
+      name: 'Platform Analytics Report',
+      desc: 'Beautiful PDF report of aggregated analytics: skill gaps, department breakdown, role distribution.',
       icon: '📈',
-      format: 'JSON',
-      action: async () => {
-        setGenerating('analytics-json');
-        try {
-          const res = await fetch(`${API_URL}/export/analytics`, { headers: { Authorization: `Bearer ${getToken()}` } });
-          const data = await res.json();
-          const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-          const a = document.createElement('a');
-          a.href = URL.createObjectURL(blob);
-          a.download = `platform-analytics-${today}.json`;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-        } catch {}
-        finally { setGenerating(null); }
-      },
+      format: 'PDF',
+      action: () => downloadFile('analytics-pdf', `${API_URL}/export/analytics/pdf`, `platform-analytics-${today}.pdf`),
     },
   ];
 
