@@ -1,4 +1,4 @@
-﻿const fs = require('fs');
+const fs = require('fs');
 const path = require('path');
 const Employee = require('../models/Employee');
 const User = require('../models/User');
@@ -643,6 +643,7 @@ const generateCareerAdvice = async (req, res) => {
       employee.aiCareerAdvice = advice;
       await employee.save();
     }
+    await AiLog.create({ userId: id, endpoint: 'careerAdvice', success: !advice.error });
 
     return res.json({ advice, cached: false });
   } catch (err) {
@@ -657,6 +658,7 @@ const generateSkillRecommendations = async (req, res) => {
     const { projectDescription } = req.body;
     if (!projectDescription) return res.status(400).json({ message: 'projectDescription is required.' });
     const skills = await gemini.generateSkillRecommendations(projectDescription);
+    await AiLog.create({ userId: req.user.id, endpoint: 'skillRecommendations', success: !skills.error });
     return res.json({ skills });
   } catch (err) {
     console.error(err);
@@ -690,6 +692,8 @@ const generateTeamInsights = async (req, res) => {
       { insights, generatedAt: new Date() },
       { upsert: true, new: true }
     );
+
+    await AiLog.create({ userId: req.user.id, endpoint: 'teamInsights', success: true });
 
     return res.json({ department, insights });
   } catch (err) {
@@ -730,9 +734,11 @@ const generateProjectTrainingPlan = async (req, res) => {
     if (plan && !plan.error) {
       project.aiAnalysis = plan;
       await project.save();
+      await AiLog.create({ userId: req.user.id, endpoint: 'projectTrainingPlan', success: true });
     }
 
     if (!plan || plan.error) {
+      await AiLog.create({ userId: req.user.id, endpoint: 'projectTrainingPlan', success: false });
       return res.status(500).json({ message: plan?.error || 'AI could not generate a training plan. Try again.' });
     }
 
@@ -763,6 +769,7 @@ const aiChat = async (req, res) => {
     }
 
     const reply = await gemini.aiChatAssistant(message, employeeContext, history);
+    await AiLog.create({ userId: req.user.id, endpoint: 'chat', success: true });
     return res.json({ reply });
   } catch (err) {
     console.error(err);

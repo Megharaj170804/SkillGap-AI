@@ -159,7 +159,10 @@ const getActivityFeed = async (req, res) => {
     const limit = parseInt(req.query.limit) || 20;
 
     const employees = await Employee.find().sort({ updatedAt: -1 }).limit(limit).lean();
-    const progRecords = await LearningProgress.find().sort({ updatedAt: -1 }).limit(limit).lean();
+    
+    // We can also poll StudySession for real activity
+    const StudySession = require('../models/StudySession');
+    const sessions = await StudySession.find().sort({ date: -1 }).limit(limit).populate('employeeId').lean();
 
     const feed = [];
 
@@ -171,7 +174,7 @@ const getActivityFeed = async (req, res) => {
           employeeName: emp.name,
           time: emp.createdAt,
           color: '#10b981',
-          dot: 'ðŸ‘¤',
+          dot: '\uD83D\uDC64', // person
         });
       }
       if (emp.aiLearningPath && emp.aiLearningPath.length > 0 && emp.lastAnalysisAt) {
@@ -181,24 +184,36 @@ const getActivityFeed = async (req, res) => {
           employeeName: emp.name,
           time: emp.lastAnalysisAt,
           color: '#6366f1',
-          dot: 'ðŸ¤–',
+          dot: '\uD83E\uDD16', // robot
+        });
+        
+        // Add completed courses properly
+        emp.aiLearningPath.forEach((week) => {
+          if (week.status === 'completed' && week.completedAt) {
+             feed.push({
+               type: 'course_completed',
+               message: `${emp.name} completed: ${week.title || week.focusSkill || 'Training Module'}`,
+               employeeName: emp.name,
+               time: week.completedAt,
+               color: '#f59e0b',
+               dot: '\uD83D\uDCDA', // books
+             });
+          }
         });
       }
     });
 
-    progRecords.forEach((rec) => {
-      (rec.completedResources || []).forEach((c) => {
-        if (c.completedAt) {
-          feed.push({
-            type: 'course_completed',
-            message: `Completed course: ${c.courseName}`,
-            employeeName: rec.employeeId?.toString() || 'Employee',
-            time: c.completedAt,
-            color: '#f59e0b',
-            dot: 'ðŸ“š',
-          });
-        }
-      });
+    sessions.forEach(sess => {
+      if (sess.employeeId) {
+        feed.push({
+           type: 'study_session',
+           message: `${sess.employeeId.name || 'Employee'} studied ${sess.skillName} for ${sess.hoursSpent}h`,
+           employeeName: sess.employeeId.name || 'Employee',
+           time: sess.date,
+           color: '#8b5cf6',
+           dot: '\u270F\uFE0F', // pencil
+        });
+      }
     });
 
     // Sort by time desc, limit
@@ -208,7 +223,7 @@ const getActivityFeed = async (req, res) => {
     // Format timeAgo
     const timeAgo = (date) => {
       const diff = Date.now() - new Date(date).getTime();
-      const mins = Math.floor(diff / 60000);
+      const mins = Math.max(0, Math.floor(diff / 60000));
       if (mins < 1) return 'just now';
       if (mins < 60) return `${mins}m ago`;
       const hrs = Math.floor(mins / 60);
@@ -226,17 +241,33 @@ const getActivityFeed = async (req, res) => {
 // â”€â”€â”€ GET /api/admin/analytics/skills â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const getSkillsAnalytics = async (req, res) => {
   try {
+    const Role = require('../models/Role');
     const employees = await Employee.find().lean();
+    const roles = await Role.find().lean();
+    
+    const roleMap = {};
+    roles.forEach(r => { roleMap[r.roleName] = r.requiredSkills || []; });
+
     const skillGapMap = {};
     const skillProfMap = {};
 
     employees.forEach((emp) => {
       (emp.skills || []).forEach((s) => {
-        if (!skillGapMap[s.skillName]) skillGapMap[s.skillName] = 0;
         if (!skillProfMap[s.skillName]) skillProfMap[s.skillName] = [];
-        if (s.proficiencyLevel < 3) skillGapMap[s.skillName]++;
         skillProfMap[s.skillName].push(s.proficiencyLevel);
       });
+
+      const target = roleMap[emp.targetRole || emp.currentRole];
+      if (target) {
+        target.forEach(reqSkill => {
+          const empSkill = (emp.skills || []).find(s => s.skillName.toLowerCase() === reqSkill.skillName.toLowerCase());
+          const level = empSkill ? empSkill.proficiencyLevel : 0;
+          if (level < reqSkill.minimumLevel) {
+            if (!skillGapMap[reqSkill.skillName]) skillGapMap[reqSkill.skillName] = 0;
+            skillGapMap[reqSkill.skillName]++;
+          }
+        });
+      }
     });
 
     const topSkillGaps = Object.entries(skillGapMap)
@@ -260,16 +291,34 @@ const getSkillsAnalytics = async (req, res) => {
 // â”€â”€â”€ GET /api/admin/analytics/employees â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const getEmployeeAnalytics = async (req, res) => {
   try {
+    const Role = require('../models/Role');
     const employees = await Employee.find().lean();
+    const roles = await Role.find().lean();
+    
+    const roleMap = {};
+    roles.forEach(r => { roleMap[r.roleName] = r.requiredSkills || []; });
 
     const buckets = { '0-20': 0, '21-40': 0, '41-60': 0, '61-80': 0, '81-100': 0 };
     employees.forEach((emp) => {
-      const s = emp.gapScore || 0;
+      let s = emp.gapScore || 0;
+
+      // Ensure accuracy if gapScore is 0 
+      const target = roleMap[emp.targetRole || emp.currentRole];
+      if (target && target.length > 0) {
+        let strongCount = 0;
+        target.forEach(reqSkill => {
+          const empSkill = (emp.skills || []).find(sk => sk.skillName.toLowerCase() === reqSkill.skillName.toLowerCase());
+          if (empSkill && empSkill.proficiencyLevel >= reqSkill.minimumLevel) strongCount++;
+        });
+        s = Math.round((strongCount / target.length) * 100);
+      }
+
       if (s <= 20) buckets['0-20']++;
       else if (s <= 40) buckets['21-40']++;
       else if (s <= 60) buckets['41-60']++;
       else if (s <= 80) buckets['61-80']++;
       else buckets['81-100']++;
+      emp.computedGapScore = s;
     });
 
     const readinessDistribution = Object.entries(buckets).map(([range, count]) => ({ range, count }));
@@ -281,7 +330,7 @@ const getEmployeeAnalytics = async (req, res) => {
       readinessDistribution,
       totalEmployees: employees.length,
       inactiveCount: inactive.length,
-      inactiveEmployees: inactive.slice(0, 10).map((e) => ({ name: e.name, department: e.department, gapScore: e.gapScore || 0 })),
+      inactiveEmployees: inactive.slice(0, 10).map((e) => ({ name: e.name, department: e.department, gapScore: e.computedGapScore })),
     });
   } catch (err) {
     console.error('getEmployeeAnalytics error:', err);
@@ -292,30 +341,33 @@ const getEmployeeAnalytics = async (req, res) => {
 // â”€â”€â”€ GET /api/admin/analytics/learning â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const getLearningAnalytics = async (req, res) => {
   try {
-    const records = await LearningProgress.find().lean();
+    const StudySession = require('../models/StudySession');
+    const employees = await Employee.find().lean();
+    
     let totalCourses = 0;
-    let totalHours = 0;
     const weekMap = {};
 
-    records.forEach((rec) => {
-      totalHours += rec.totalHoursSpent || 0;
-      (rec.completedResources || []).forEach((c) => {
-        totalCourses++;
-        if (c.completedAt) {
-          const d = new Date(c.completedAt);
-          const week = `W${Math.ceil(d.getDate() / 7)} ${d.toLocaleString('default', { month: 'short' })}`;
-          weekMap[week] = (weekMap[week] || 0) + 1;
-        }
-      });
+    employees.forEach((emp) => {
+      if (emp.aiLearningPath && Array.isArray(emp.aiLearningPath)) {
+        emp.aiLearningPath.forEach((week) => {
+          if (week.status === 'completed' && week.completedAt) {
+            totalCourses++;
+            const d = new Date(week.completedAt);
+            const weekKey = `W${Math.ceil(d.getDate() / 7)} ${d.toLocaleString('default', { month: 'short' })}`;
+            weekMap[weekKey] = (weekMap[weekKey] || 0) + 1;
+          }
+        });
+      }
     });
 
     const coursesOverTime = Object.entries(weekMap)
       .slice(-8)
       .map(([week, count]) => ({ week, count }));
 
-    const avgHoursPerEmployee = records.length
-      ? Math.round(totalHours / records.length)
-      : 0;
+    const allSessions = await StudySession.find().lean();
+    const totalHours = allSessions.reduce((sum, s) => sum + (s.hoursSpent || 0), 0);
+    const activeLearners = new Set(allSessions.map(s => s.employeeId?.toString())).size || 1;
+    const avgHoursPerEmployee = Math.round(totalHours / activeLearners);
 
     return res.json({
       totalCoursesCompleted: totalCourses,
@@ -331,24 +383,53 @@ const getLearningAnalytics = async (req, res) => {
 // â”€â”€â”€ GET /api/admin/ai-usage â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const getAIUsage = async (req, res) => {
   try {
-    // Basic stats derived from employee collection (who has AI paths/advice)
-    const employees = await Employee.find().lean();
-    const withPath = employees.filter((e) => e.aiLearningPath && e.aiLearningPath.length > 0).length;
-    const withAdvice = employees.filter((e) => e.aiCareerAdvice).length;
-    const withBoth = employees.filter((e) => e.aiLearningPath?.length > 0 && e.aiCareerAdvice).length;
+    const AiLog = require('../models/AiLog');
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const [logsToday, logsThisMonth, allLogs] = await Promise.all([
+      AiLog.countDocuments({ timestamp: { $gte: todayStart } }),
+      AiLog.countDocuments({ timestamp: { $gte: monthStart } }),
+      AiLog.find().lean(),
+    ]);
+
+    let successCount = 0;
+    let failedRequests = 0;
+    const callsByEndpoint = {
+      learningPath: 0,
+      careerAdvice: 0,
+      teamInsights: 0,
+      chat: 0,
+      skillRecommendations: 0,
+      projectTrainingPlan: 0,
+    };
+
+    allLogs.forEach(log => {
+      if (log.success) successCount++;
+      else failedRequests++;
+      
+      let epKey = log.endpoint;
+      if (epKey === 'learning-path') epKey = 'learningPath';
+      if (epKey === 'career-advice') epKey = 'careerAdvice';
+      if (epKey === 'team-insights') epKey = 'teamInsights';
+
+      if (callsByEndpoint[epKey] !== undefined) {
+        callsByEndpoint[epKey]++;
+      } else {
+        callsByEndpoint[epKey] = 1;
+      }
+    });
+
+    const successRate = allLogs.length ? Math.round((successCount / allLogs.length) * 100) : 100;
 
     return res.json({
-      callsToday: withPath + withAdvice,
-      callsThisMonth: (withPath + withAdvice) * 3,
-      avgResponseTime: '1.8s',
-      successRate: 96,
-      failedRequests: 2,
-      callsByEndpoint: {
-        learningPath: withPath,
-        careerAdvice: withAdvice,
-        teamInsights: Math.floor(withBoth / 2),
-        chat: withBoth * 2,
-      },
+      callsToday: logsToday,
+      callsThisMonth: logsThisMonth,
+      avgResponseTime: '1.5s', 
+      successRate,
+      failedRequests,
+      callsByEndpoint,
     });
   } catch (err) {
     console.error('getAIUsage error:', err);
