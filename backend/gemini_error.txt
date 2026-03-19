@@ -1,0 +1,83 @@
+[
+  {
+    "week": 1,
+    "title": "React Foundations: Components & State",
+    "focusSkill": "React",
+    "skillCategory": "Frontend",
+    "priority": "critical",
+    "overview": "This week focuses on the fundamental building blocks of React: JSX, components, props, and state management. You'll learn how to create reusable UI elements and manage their internal data.",
+    "weeklyGoalHours": 5,
+    "dailyPlan": {
+      "monday": { "task": "Watch 'React Crash Course' Part 1 (JSX, Components)", "estimatedHours": 1 },
+      "tuesday": { "task": "Practice creating functional components and passing props", "estimatedHours": 1 },
+      "wednesday": { "task": "Watch 'React Crash Course' Part 2 (State, Event Handling)", "estimatedHours": 1 },
+      "thursday": { "task": "Implement basic state with `useState` hook and event handlers", "estimatedHours": 1 },
+      "friday": { "task": "Review concepts and start planning for the practice project", "estimatedHours": 1 }
+    },
+    "resources": [
+      {
+        "type": "video",
+        "title": "React JS Crash Course 2021",
+        "platform": "YouTube",
+        "url": "https://www.youtube.com/watch?v=DqcHA-pL844",
+        "estimatedHours": 2.5,
+        "difficulty": "beginner"
+      },
+      {
+        "type": "article",
+        "title": "React Documentation: Main Concepts",
+        "platform": "React Official Docs",
+        "url": "https://react.dev/learn",
+        "estimatedHours": 1.5,
+        "difficulty": "beginner"
+      }
+    ],
+    "practiceProject": {
+      "title": "Simple Counter App with React",
+      "description": "Build a basic React application with a counter that can increment and decrement. Focus on state management and event handling.",
+      "estimatedHours": 1,
+      "githubSearchQuery": "react simple counter app"
+    },
+    "weeklyCheckpoint": "You can create functional React components, pass props, and manage simple state using `useState`.",
+    "keyConceptsCovered": ["JSX", "Functional Components", "Props", "State", "useState Hook", "Event Handling"],
+    "nextWeekPreview": "Next week, we'll dive into more advanced React hooks like `useEffect` and introduce client-side routing with React Router."
+  },
+  {
+    "week": 2,
+    "title": "React Advanced: Hooks & Routing",
+    "focusSkill": "React",
+    "skillCategory": "Frontend",
+    "priority": "critical",
+    "overview": "This week expands on React fundamentals by introducing the `useEffect` hook for side effects and integrating React Router for navigation. You'll build a multi-page single-page application.",
+    "weeklyGoalHours": 5,
+    "dailyPlan": {
+      "monday": { "task": "Watch video on `useEffect` hook and its use cases", "estimatedHours": 1 },
+      "tuesday": { "task": "Implement data fetching with `useEffect` in a simple component", "estimatedHours": 1 },
+      "wednesday": { "task": "Watch 'React Router Tutorial' for navigation basics", "estimatedHours": 1 },
+      "thursday": { "task": "Set up React Router for basic page navigation in your project", "estimatedHours": 1 },
+      "friday": { "task": "Integrate all learned concepts into the practice project", "estimatedHours": 1 }
+    },
+    "resources": [
+      {
+        "type": "video",
+        "title": "React JS useEffect Hook Tutorial",
+        "platform": "YouTube",
+        "url": "https://www.youtube.com/watch?v=0ZJgVE1c10Y",
+        "estimatedHours": 1.0,
+        "difficulty": "intermediate"
+      },
+      {
+        "type": "video",
+        "title": "React Router Tutorial for Beginners",
+        "platform": "YouTube",
+        "url": "https://www.youtube.com/watch?v=Law7wfdg_ls",
+        "estimatedHours": 1.5,
+        "difficulty": "beginner"
+      },
+      {
+        "type": "article",
+        "title": "React Router Dom V6 Tutorial",
+        "platform": "FreeCodeCamp",
+        "url": "https://www.freecodecamp.org/news/react-router-dom-v6-tutorial/",
+        "estimatedHours": 1.0,
+        

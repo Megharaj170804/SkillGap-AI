@@ -18,6 +18,7 @@ const exportRoutes = require('./routes/export.routes');
 const adminRoutes = require('./routes/admin.routes');
 const managerRoutes = require('./routes/manager.routes');
 const achievementRoutes = require('./routes/achievement.routes');
+const skillRoutes = require('./routes/skill.routes');
 
 const app = express();
 const server = http.createServer(app);
@@ -111,6 +112,45 @@ app.use('/api/export', exportRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/manager', managerRoutes);
 app.use('/api/achievements', achievementRoutes);
+app.use('/api/skills', skillRoutes);
+
+// ── PUBLIC stats endpoint for landing page (no auth required) ──────────────
+app.get('/api/stats', async (req, res) => {
+  try {
+    const Employee = require('./models/Employee');
+    const LearningProgress = require('./models/LearningProgress');
+
+    const [employees, learningRecords] = await Promise.all([
+      Employee.find().lean(),
+      LearningProgress.find().lean(),
+    ]);
+
+    const totalEmployees = employees.length;
+    const withLearningPath = employees.filter(e => e.aiLearningPath && e.aiLearningPath.length > 0).length;
+
+    let totalCoursesCompleted = 0;
+    let totalHours = 0;
+    learningRecords.forEach(r => {
+      totalCoursesCompleted += (r.completedCourses || []).length;
+      totalHours += r.totalHoursSpent || 0;
+    });
+
+    const avgReadiness = totalEmployees
+      ? Math.round(employees.reduce((s, e) => s + (e.gapScore || 0), 0) / totalEmployees)
+      : 0;
+
+    return res.json({
+      totalEmployees,
+      withLearningPath,
+      totalCoursesCompleted,
+      totalHours: Math.round(totalHours),
+      avgReadiness,
+    });
+  } catch (err) {
+    console.error('Public stats error:', err);
+    return res.status(500).json({ message: 'Stats unavailable' });
+  }
+});
 
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date() }));

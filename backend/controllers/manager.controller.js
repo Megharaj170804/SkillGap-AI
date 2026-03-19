@@ -1,4 +1,4 @@
-const User = require('../models/User');
+﻿const User = require('../models/User');
 const Employee = require('../models/Employee');
 const LearningProgress = require('../models/LearningProgress');
 const StudySession = require('../models/StudySession');
@@ -81,8 +81,12 @@ exports.getMyStats = async (req, res) => {
     let lastWeekCourses = 0;
 
     programs.forEach(prog => {
-      prog.completedCourses.forEach(course => {
-        const completedAt = new Date(course.completedAt);
+      const completedItems = prog.completedResources || [];
+
+      completedItems.forEach(item => {
+        const completedAt = item?.completedAt ? new Date(item.completedAt) : null;
+        if (!completedAt || Number.isNaN(completedAt.getTime())) return;
+
         if (completedAt >= startOfThisWeek) {
           thisWeekCourses++;
         } else if (completedAt >= startOfLastWeek && completedAt < startOfThisWeek) {
@@ -123,7 +127,7 @@ exports.getMyStats = async (req, res) => {
 
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Error fetching stats' });
+    res.status(500).json({ message: 'Error fetching stats', error: err.message });
   }
 };
 
@@ -290,7 +294,6 @@ exports.getTeamInsightsCache = async (req, res) => {
 
 exports.getActivityFeed = async (req, res) => {
   try {
-    const managerId = req.user.id;
     const department = req.user.department;
     if (!department) return res.status(400).json({ message: 'No department assigned to manager.' });
 
@@ -320,15 +323,20 @@ exports.getActivityFeed = async (req, res) => {
     // Completed Courses
     const progress = await LearningProgress.find({ employeeId: { $in: employeeIds } });
     progress.forEach(p => {
-      p.completedCourses.forEach(c => {
+      const completedItems = p.completedResources || [];
+
+      completedItems.forEach(c => {
         const emp = employeeMap.get(p.employeeId.toString());
         if (emp) {
+          const itemName = c?.courseName || c?.title || p.skillName || 'a learning resource';
+          const completedAt = c?.completedAt || p.updatedAt || p.startedAt || new Date();
+
           feed.push({
             type: 'course',
             employeeName: emp.name,
             employeeAvatar: emp.avatar,
-            message: `completed ${c.courseName}`,
-            timestamp: c.completedAt
+            message: `completed ${itemName}`,
+            timestamp: completedAt
           });
         }
       });
@@ -385,7 +393,7 @@ exports.getActivityFeed = async (req, res) => {
     res.json(recentFeed);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Error fetching activity feed' });
+    res.status(500).json({ message: 'Error fetching activity feed', error: err.message });
   }
 };
 
@@ -455,8 +463,9 @@ exports.getTeamProgress = async (req, res) => {
       let coursesCompletedThisWeek = 0;
       let totalCoursesCompleted = 0;
       if (empProg) {
-        coursesCompletedThisWeek = empProg.completedCourses.filter(c => new Date(c.completedAt) >= startOfThisWeek).length;
-        totalCoursesCompleted = empProg.completedCourses.length;
+        const completedCourses = empProg.completedResources || [];
+        coursesCompletedThisWeek = completedCourses.filter(c => c?.completedAt && new Date(c.completedAt) >= startOfThisWeek).length;
+        totalCoursesCompleted = completedCourses.length;
       }
 
       const currentGap = emp.gapScore || 0;
@@ -702,6 +711,76 @@ exports.createProject = async (req, res) => {
   }
 };
 
+
+exports.assignEmployeesToProject = async (req, res) => {
+  try {
+    const managerId = req.user.id;
+    const department = req.user.department;
+    const { projectId } = req.params;
+    const { employeeIds } = req.body;
+
+    if (!Array.isArray(employeeIds)) {
+      return res.status(400).json({ message: 'employeeIds must be an array.' });
+    }
+
+    const project = await Project.findOne({ _id: projectId, managerId, department });
+    if (!project) return res.status(404).json({ message: 'Project not found.' });
+
+    let skillCoveragePercent = 0;
+    if (employeeIds.length > 0 && project.requiredSkills && project.requiredSkills.length > 0) {
+      const emps = await Employee.find({ _id: { $in: employeeIds }, department });
+      let metSkillsCount = 0;
+      project.requiredSkills.forEach(reqSkill => {
+        const isMet = emps.some(emp => {
+          const empSkill = (emp.skills || []).find(s =>
+            s.skillName.toLowerCase() === reqSkill.skillName.toLowerCase()
+          );
+          return empSkill && empSkill.proficiencyLevel >= (reqSkill.level || reqSkill.minimumLevel || 3);
+        });
+        if (isMet) metSkillsCount++;
+      });
+      skillCoveragePercent = Math.round((metSkillsCount / project.requiredSkills.length) * 100);
+    }
+
+    const diffDays = Math.ceil((new Date(project.deadline) - new Date()) / (1000 * 60 * 60 * 24));
+    let riskLevel = 'medium';
+    if (diffDays < 14 || skillCoveragePercent < 50) riskLevel = 'high';
+    else if (skillCoveragePercent >= 80) riskLevel = 'low';
+
+    project.assignedEmployees = employeeIds;
+    project.skillCoveragePercent = skillCoveragePercent;
+    project.riskLevel = riskLevel;
+    await project.save();
+
+    const updated = await Project.findById(project._id).populate('assignedEmployees', 'name email currentRole skills');
+    const today = new Date();
+    const daysUntilDeadline = Math.ceil((new Date(updated.deadline) - today) / (1000 * 60 * 60 * 24));
+
+    res.json({
+      _id: updated._id,
+      name: updated.name,
+      description: updated.description,
+      techStack: updated.techStack,
+      requiredSkills: updated.requiredSkills,
+      deadline: updated.deadline,
+      daysUntilDeadline,
+      assignedEmployees: updated.assignedEmployees.map(e => ({
+        _id: e._id,
+        name: e.name,
+        currentRole: e.currentRole,
+        avatar: (e.name || 'U').charAt(0).toUpperCase(),
+        skills: e.skills
+      })),
+      skillCoveragePercent: updated.skillCoveragePercent,
+      riskLevel: updated.riskLevel,
+      aiAnalysis: updated.aiAnalysis
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error assigning employees to project' });
+  }
+};
+
 exports.sendNudge = async (req, res) => {
   try {
     const managerId = req.user.id;
@@ -924,3 +1003,7 @@ exports.getEmployeeReport = async (req, res) => {
     if (!res.headersSent) res.status(500).json({ message: 'Error generating PDF' });
   }
 };
+
+
+
+

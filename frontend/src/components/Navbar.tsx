@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import NotificationBell from './NotificationBell';
 import GlobalSearch from './GlobalSearch';
@@ -7,7 +7,7 @@ import { connectSocket, disconnectSocket } from '../hooks/useSocket';
 
 const Navbar: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuth();
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('darkMode') !== 'false');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -29,7 +29,6 @@ const Navbar: React.FC = () => {
   const handleLogout = async () => {
     disconnectSocket();
     await logout();
-    navigate('/login');
   };
 
   if (!isAuthenticated) return null;

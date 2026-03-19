@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const Login: React.FC = () => {
@@ -9,6 +9,18 @@ const Login: React.FC = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Auto-fill from DemoWidget sessionStorage
+  useEffect(() => {
+    const demoEmail = sessionStorage.getItem('demoEmail');
+    const demoPassword = sessionStorage.getItem('demoPassword');
+    if (demoEmail && demoPassword) {
+      setEmail(demoEmail);
+      setPassword(demoPassword);
+      sessionStorage.removeItem('demoEmail');
+      sessionStorage.removeItem('demoPassword');
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,11 +102,6 @@ const Login: React.FC = () => {
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
-
-          <div style={{ marginTop: '1.5rem', textAlign: 'center', color: '#94a3b8', fontSize: '0.85rem' }}>
-            Don't have an account?{' '}
-            <Link to="/register" style={{ color: '#6366f1', fontWeight: 600, textDecoration: 'none' }}>Register</Link>
-          </div>
         </div>
 
         {/* Quick credentials hint */}

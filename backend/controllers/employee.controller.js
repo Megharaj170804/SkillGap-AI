@@ -662,16 +662,24 @@ const getLearningPath = async (req, res) => {
     const employee = await Employee.findById(employeeId).lean();
     if (!employee) return res.status(404).json({ message: 'Employee not found.' });
 
-    const path = employee.aiLearningPath || [];
-    const completedCount = path.filter(w => w.status === 'completed').length;
+    let path = employee.aiLearningPath || [];
+
+    // If path exists but looks like flat array (has items without week number)
+    const isFlatArray = path.length > 0 && path[0].week === undefined
+    if (isFlatArray) {
+      const { transformLearningPath } = require('./ai.controller');
+      path = transformLearningPath(path)
+      // Re-save the fixed structure
+      await Employee.findByIdAndUpdate(employeeId, { aiLearningPath: path })
+    }
+
+    const currentWeekIndex = path.findIndex(w => w.status === 'in_progress')
+    const completedCount = path.filter(w => w.status === 'completed').length
     const totalWeeks = path.length;
-    
-    let currentWeekItem = path.find(w => w.status !== 'completed');
-    const currentWeek = currentWeekItem ? currentWeekItem.week : (totalWeeks > 0 ? totalWeeks : 1);
 
     return res.json({ 
       learningPath: path, 
-      currentWeek, 
+      currentWeek: currentWeekIndex + 1, 
       completedCount, 
       totalWeeks, 
       targetRole: employee.targetRole

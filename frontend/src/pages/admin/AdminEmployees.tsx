@@ -118,7 +118,9 @@ const EmployeeModal = ({ employee, onClose, onSaved, roles }: any) => {
           {[{ key: 'name', label: 'Full Name', type: 'text' }, { key: 'email', label: 'Email', type: 'email' }, ...(!isEdit ? [{ key: 'password', label: 'Password', type: 'password' }] : []), { key: 'currentRole', label: 'Current Role', type: 'text' }].map(({ key, label, type }) => (
             <div key={key}>
               <label style={labelStyle}>{label.toUpperCase()}</label>
-              <input type={type} value={(form as any)[key]} onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))} placeholder={`Enter ${label}...`} style={inputStyle} />
+              <div style={{ display: 'flex', width: '100%' }}>
+                <input type={type} value={(form as any)[key]} onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))} placeholder={`Enter ${label}...`} className="form-input" style={{ flex: 1, ...inputStyle }} />
+              </div>
               {errors[key] && <div style={errStyle}>{errors[key]}</div>}
             </div>
           ))}

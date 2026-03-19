@@ -11,6 +11,8 @@ const {
   getDeptAnalytics,
   getAIUsage,
   bulkGenerateAIPaths,
+  fixLearningPaths,
+  getDeptReport,
 } = require('../controllers/admin.controller');
 const { verifyToken } = require('../middleware/auth.middleware');
 const { authorizeRoles } = require('../middleware/role.middleware');
@@ -25,9 +27,11 @@ router.get('/analytics/skills', ...adminOnly, getSkillsAnalytics);
 router.get('/analytics/employees', getEmployeeAnalytics);
 router.get('/analytics/learning', getLearningAnalytics);
 router.get('/analytics/departments', getDeptAnalytics);
+router.get('/analytics/departments/:deptName/report', ...adminOnly, getDeptReport);
 
 // AI usage
 router.get('/ai-usage', getAIUsage);
 router.post('/bulk-ai-paths', ...adminOnly, bulkGenerateAIPaths);
+router.post('/fix-learning-paths', ...adminOnly, fixLearningPaths);
 
 module.exports = router;

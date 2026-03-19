@@ -4,7 +4,7 @@ const LearningProgress = require('../models/LearningProgress');
 const Notification = require('../models/Notification');
 const gemini = require('../services/gemini.service');
 
-// ─── Helper: compute gapScore for an employee ─────────────────────────────────
+// â”€â”€â”€ Helper: compute gapScore for an employee â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function computeGapScore(employee) {
   if (!employee.targetRole) return 0;
   try {
@@ -25,7 +25,7 @@ async function computeGapScore(employee) {
   }
 }
 
-// ─── GET /api/admin/stats ──────────────────────────────────────────────────────
+// â”€â”€â”€ GET /api/admin/stats â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const getAdminStats = async (req, res) => {
   try {
     const now = new Date();
@@ -62,7 +62,7 @@ const getAdminStats = async (req, res) => {
     const learningRecords = await LearningProgress.find().lean();
     let totalCoursesCompletedThisMonth = 0;
     learningRecords.forEach((rec) => {
-      (rec.completedCourses || []).forEach((c) => {
+      (rec.completedResources || []).forEach((c) => {
         if (c.completedAt && new Date(c.completedAt) >= startOfMonth) {
           totalCoursesCompletedThisMonth++;
         }
@@ -79,7 +79,7 @@ const getAdminStats = async (req, res) => {
       totalEmployees,
       totalEmployeesChangeThisMonth,
       avgReadinessScore,
-      avgReadinessChangePercent: 5, // placeholder — would need historical snapshot
+      avgReadinessChangePercent: 5, // placeholder â€” would need historical snapshot
       activeLearningPaths,
       learningPathAdoptionPercent,
       criticalGapsCount,
@@ -92,7 +92,7 @@ const getAdminStats = async (req, res) => {
   }
 };
 
-// ─── GET /api/admin/readiness-trend ───────────────────────────────────────────
+// â”€â”€â”€ GET /api/admin/readiness-trend â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const getReadinessTrend = async (req, res) => {
   try {
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -126,7 +126,7 @@ const getReadinessTrend = async (req, res) => {
   }
 };
 
-// ─── GET /api/admin/dept-readiness ────────────────────────────────────────────
+// â”€â”€â”€ GET /api/admin/dept-readiness â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const getDeptReadiness = async (req, res) => {
   try {
     const employees = await Employee.find().lean();
@@ -153,7 +153,7 @@ const getDeptReadiness = async (req, res) => {
   }
 };
 
-// ─── GET /api/admin/activity-feed ─────────────────────────────────────────────
+// â”€â”€â”€ GET /api/admin/activity-feed â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const getActivityFeed = async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 20;
@@ -171,7 +171,7 @@ const getActivityFeed = async (req, res) => {
           employeeName: emp.name,
           time: emp.createdAt,
           color: '#10b981',
-          dot: '👤',
+          dot: 'ðŸ‘¤',
         });
       }
       if (emp.aiLearningPath && emp.aiLearningPath.length > 0 && emp.lastAnalysisAt) {
@@ -181,13 +181,13 @@ const getActivityFeed = async (req, res) => {
           employeeName: emp.name,
           time: emp.lastAnalysisAt,
           color: '#6366f1',
-          dot: '🤖',
+          dot: 'ðŸ¤–',
         });
       }
     });
 
     progRecords.forEach((rec) => {
-      (rec.completedCourses || []).forEach((c) => {
+      (rec.completedResources || []).forEach((c) => {
         if (c.completedAt) {
           feed.push({
             type: 'course_completed',
@@ -195,7 +195,7 @@ const getActivityFeed = async (req, res) => {
             employeeName: rec.employeeId?.toString() || 'Employee',
             time: c.completedAt,
             color: '#f59e0b',
-            dot: '📚',
+            dot: 'ðŸ“š',
           });
         }
       });
@@ -223,7 +223,7 @@ const getActivityFeed = async (req, res) => {
   }
 };
 
-// ─── GET /api/admin/analytics/skills ──────────────────────────────────────────
+// â”€â”€â”€ GET /api/admin/analytics/skills â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const getSkillsAnalytics = async (req, res) => {
   try {
     const employees = await Employee.find().lean();
@@ -257,7 +257,7 @@ const getSkillsAnalytics = async (req, res) => {
   }
 };
 
-// ─── GET /api/admin/analytics/employees ───────────────────────────────────────
+// â”€â”€â”€ GET /api/admin/analytics/employees â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const getEmployeeAnalytics = async (req, res) => {
   try {
     const employees = await Employee.find().lean();
@@ -289,7 +289,7 @@ const getEmployeeAnalytics = async (req, res) => {
   }
 };
 
-// ─── GET /api/admin/analytics/learning ────────────────────────────────────────
+// â”€â”€â”€ GET /api/admin/analytics/learning â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const getLearningAnalytics = async (req, res) => {
   try {
     const records = await LearningProgress.find().lean();
@@ -299,7 +299,7 @@ const getLearningAnalytics = async (req, res) => {
 
     records.forEach((rec) => {
       totalHours += rec.totalHoursSpent || 0;
-      (rec.completedCourses || []).forEach((c) => {
+      (rec.completedResources || []).forEach((c) => {
         totalCourses++;
         if (c.completedAt) {
           const d = new Date(c.completedAt);
@@ -328,7 +328,7 @@ const getLearningAnalytics = async (req, res) => {
   }
 };
 
-// ─── GET /api/admin/ai-usage ──────────────────────────────────────────────────
+// â”€â”€â”€ GET /api/admin/ai-usage â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const getAIUsage = async (req, res) => {
   try {
     // Basic stats derived from employee collection (who has AI paths/advice)
@@ -356,7 +356,7 @@ const getAIUsage = async (req, res) => {
   }
 };
 
-// ─── POST /api/admin/bulk-ai-paths ────────────────────────────────────────────
+// â”€â”€â”€ POST /api/admin/bulk-ai-paths â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const bulkGenerateAIPaths = async (req, res) => {
   try {
     const io = req.app.get('io');
@@ -408,20 +408,27 @@ const bulkGenerateAIPaths = async (req, res) => {
   }
 };
 
-// ─── GET /api/admin/analytics/departments ─────────────────────────────────────
+// â”€â”€â”€ GET /api/admin/analytics/departments â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const getDeptAnalytics = async (req, res) => {
   try {
+    const User = require('../models/User');
     const employees = await Employee.find().lean();
     const deptMap = {};
 
+    // Get all users with the manager role to find department heads
+    const managers = await User.find({ role: 'manager' }).lean();
+    
     employees.forEach((emp) => {
       const d = emp.department || 'Unknown';
       if (!deptMap[d]) {
+        const tempManager = managers.find(m => m.department === d);
+        const headName = tempManager ? tempManager.name : 'Unassigned';
+        const headAvatar = tempManager ? tempManager.name.charAt(0).toUpperCase() : d.charAt(0).toUpperCase();
         deptMap[d] = {
           id: d,
           name: d,
-          head: 'Unassigned',
-          headAvatar: d.charAt(0).toUpperCase(),
+          head: headName,
+          headAvatar: headAvatar,
           employeeCount: 0,
           totalScore: 0,
           criticalGaps: 0,
@@ -470,7 +477,65 @@ const getDeptAnalytics = async (req, res) => {
   }
 };
 
-// ─── Helper export ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ POST /api/admin/fix-learning-paths â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+const fixLearningPaths = async (req, res) => {
+  try {
+    const employees = await Employee.find({ 
+      'aiLearningPath.0': { $exists: true } 
+    });
+
+    const { transformLearningPath } = require('./ai.controller');
+    let count = 0;
+
+    for (const emp of employees) {
+      const isBroken = emp.aiLearningPath[0] && emp.aiLearningPath[0].week === undefined;
+      if (isBroken) {
+        const fixed = transformLearningPath(emp.aiLearningPath);
+        await Employee.findByIdAndUpdate(emp._id, { aiLearningPath: fixed });
+        console.log(`Fixed learning path for ${emp.name}`);
+        count++;
+      }
+    }
+
+    res.json({ fixed: count });
+  } catch (err) {
+    console.error('fixLearningPaths error:', err);
+    return res.status(500).json({ message: 'Server error.' });
+  }
+};
+
+// â”€â”€â”€// ─── GET /api/admin/analytics/departments/:deptName/report (CSV) ─────────────────────
+const getDeptReport = async (req, res) => {
+  try {
+    const { deptName } = req.params;
+    const employees = await Employee.find({ department: deptName }).lean();
+    if (!employees.length) return res.status(404).json({ message: 'No employees found in this department.' });
+
+    const header = 'Name,Email,CurrentRole,TargetRole,ReadinessScore,SkillsCount,HasAIPath,LastActive';
+    const rows = employees.map(emp => [
+      `"${emp.name || ''}",`,
+      `"${emp.email || ''}",`,
+      `"${emp.currentRole || ''}",`,
+      `"${emp.targetRole || ''}",`,
+      `${emp.gapScore || 0},`,
+      `${(emp.skills || []).length},`,
+      `${(emp.aiLearningPath && emp.aiLearningPath.length > 0) ? 'Yes' : 'No'},`,
+      `"${emp.lastActive ? new Date(emp.lastActive).toLocaleDateString() : 'N/A'}"`
+    ].join('')).join('\n');
+
+    const csv = header + '\n' + rows;
+    const filename = `${deptName.replace(/\s+/g, '-')}-report-${new Date().toISOString().split('T')[0]}.csv`;
+
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.send(csv);
+  } catch (err) {
+    console.error('getDeptReport error:', err);
+    res.status(500).json({ message: 'Error generating report.' });
+  }
+};
+
+// â”€â”€â”€ Helper export â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 module.exports = {
   computeGapScore,
   getAdminStats,
@@ -483,4 +548,7 @@ module.exports = {
   getDeptAnalytics,
   getAIUsage,
   bulkGenerateAIPaths,
+  fixLearningPaths,
+  getDeptReport,
 };
+

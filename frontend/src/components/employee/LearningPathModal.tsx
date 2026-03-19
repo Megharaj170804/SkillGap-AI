@@ -15,7 +15,7 @@ const LearningPathModal: React.FC<Props> = ({ isOpen, onClose, onGenerate, emplo
   const [hoursPerWeek, setHoursPerWeek] = useState(10);
   const [focusAreas, setFocusAreas] = useState<string[]>([]);
   const [learningStyle, setLearningStyle] = useState('📹 Video-focused');
-  const [weekCount, setWeekCount] = useState(12);
+  const [weekCount, setWeekCount] = useState(8);
 
   const [newSkillName, setNewSkillName] = useState('');
   const [newSkillLevel, setNewSkillLevel] = useState(1);
@@ -128,6 +128,12 @@ const LearningPathModal: React.FC<Props> = ({ isOpen, onClose, onGenerate, emplo
           </div>
 
           <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+            <div style={{ background: 'rgba(30,58,138,0.25)', border: '1px solid rgba(59,130,246,0.45)', borderRadius: '8px', padding: '0.75rem' }}>
+              <p style={{ color: '#bfdbfe', fontSize: '0.78rem', margin: 0 }}>
+                AI generation uses daily quota. Your saved learning path reloads from database without consuming quota. Regenerate only when you need a fresh plan.
+              </p>
+            </div>
+
             {/* Target Role */}
             <div>
               <label style={{ display: 'block', marginBottom: '0.5rem', color: '#cbd5e1', fontWeight: 600 }}>What role are you targeting?</label>

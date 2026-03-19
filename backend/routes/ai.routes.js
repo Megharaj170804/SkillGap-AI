@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { verifyToken } = require('../middleware/auth.middleware');
 const { authorizeRoles } = require('../middleware/role.middleware');
-const rateLimit = require('express-rate-limit');
+const { aiRateLimit, learningPathRateLimit } = require('../middleware/rateLimit.middleware');
 
 const {
   generateLearningPath,
@@ -13,21 +13,11 @@ const {
   aiChat,
 } = require('../controllers/ai.controller');
 
-// Rate limit: 10 requests per minute per user
-const aiLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 10,
-  keyGenerator: (req) => req.user?.id || 'guest',
-  message: { message: 'Too many AI requests. Please wait a minute before trying again.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-router.post('/learning-path/:employeeId', verifyToken, aiLimiter, generateLearningPath);
-router.post('/career-advice/:employeeId', verifyToken, aiLimiter, generateCareerAdvice);
-router.post('/skill-recommendations', verifyToken, aiLimiter, generateSkillRecommendations);
-router.post('/team-insights/:department', verifyToken, authorizeRoles('admin', 'manager'), aiLimiter, generateTeamInsights);
-router.post('/project-training-plan/:projectId', verifyToken, authorizeRoles('admin', 'manager'), aiLimiter, generateProjectTrainingPlan);
-router.post('/chat', verifyToken, aiLimiter, aiChat);
+router.post('/learning-path/:employeeId', verifyToken, learningPathRateLimit, generateLearningPath);
+router.post('/career-advice/:employeeId', verifyToken, aiRateLimit, generateCareerAdvice);
+router.post('/skill-recommendations', verifyToken, aiRateLimit, generateSkillRecommendations);
+router.post('/team-insights/:department', verifyToken, authorizeRoles('admin', 'manager'), aiRateLimit, generateTeamInsights);
+router.post('/project-training-plan/:projectId', verifyToken, authorizeRoles('admin', 'manager'), aiRateLimit, generateProjectTrainingPlan);
+router.post('/chat', verifyToken, aiRateLimit, aiChat);
 
 module.exports = router;

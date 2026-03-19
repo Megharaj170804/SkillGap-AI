@@ -23,6 +23,9 @@ const AdminDepartments: React.FC = () => {
   const [selectedDept, setSelectedDept] = useState<Department | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [generatingInsights, setGeneratingInsights] = useState(false);
+  const [exportingReport, setExportingReport] = useState(false);
+  const [departmentInsights, setDepartmentInsights] = useState<any>(null);
 
   const fetchDepartments = useCallback(async () => {
     try {
@@ -138,11 +141,12 @@ const AdminDepartments: React.FC = () => {
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedDept(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 200 }} />
             <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'tween', duration: 0.3 }}
               style={{ position: 'fixed', top: 0, right: 0, width: 480, height: '100vh', background: '#0f1626', borderLeft: '1px solid rgba(99, 102, 241, 0.3)', zIndex: 201, overflowY: 'auto', padding: '2rem' }}>
-              <button onClick={() => setSelectedDept(null)} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'rgba(255,255,255,0.07)', border: 'none', color: '#94a3b8', width: 36, height: 36, borderRadius: '50%', cursor: 'pointer', fontSize: '1.2rem' }}>×</button>
+              <button onClick={() => { setSelectedDept(null); setDepartmentInsights(null); }} style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'rgba(255,255,255,0.07)', border: 'none', color: '#94a3b8', width: 36, height: 36, borderRadius: '50%', cursor: 'pointer', fontSize: '1.2rem' }}>×</button>
               <div style={{ borderLeft: `4px solid ${selectedDept.color}`, paddingLeft: '1rem', marginBottom: '2rem' }}>
                 <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800, color: '#f1f5f9' }}>{selectedDept.name}</h2>
                 <p style={{ margin: '0.25rem 0 0 0', color: '#94a3b8' }}>Department Head: <span style={{ color: '#f1f5f9', fontWeight: 600 }}>{selectedDept.head}</span></p>
               </div>
+
               <div style={{ marginBottom: '2rem' }}>
                 <h4 style={{ color: '#94a3b8', fontSize: '0.8rem', fontWeight: 600, marginBottom: '1rem', letterSpacing: '0.05em' }}>Top Skill Coverages</h4>
                 <ResponsiveContainer width="100%" height={220}>
@@ -156,9 +160,101 @@ const AdminDepartments: React.FC = () => {
                 </ResponsiveContainer>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                <button className="btn-primary" style={{ width: '100%' }}>🤖 Generate Team AI Insights</button>
-                <button className="btn-secondary" style={{ width: '100%' }}>📋 Export Department Report</button>
+                <button 
+                  className="btn-primary" 
+                  style={{ width: '100%' }}
+                  disabled={generatingInsights}
+                  onClick={async () => {
+                    setGeneratingInsights(true);
+                    setDepartmentInsights(null);
+                    try {
+                      const res = await api.post(`/ai/team-insights/${encodeURIComponent(selectedDept.name)}`);
+                      setDepartmentInsights(res.data.insights);
+                      import('react-hot-toast').then(m => m.default.success(`AI Insights generated for ${selectedDept.name}`));
+                    } catch (err: any) {
+                      import('react-hot-toast').then(m => m.default.error(err.response?.data?.message || 'Failed to generate insights'));
+                    } finally {
+                      setGeneratingInsights(false);
+                    }
+                  }}
+                >
+                  {generatingInsights ? '⏳ Generating...' : '🤖 Generate Team AI Insights'}
+                </button>
+                <button 
+                  className="btn-secondary" 
+                  style={{ width: '100%' }}
+                  disabled={exportingReport}
+                  onClick={async () => {
+                    setExportingReport(true);
+                    try {
+                      const res = await api.get(`/admin/analytics/departments/${encodeURIComponent(selectedDept.name)}/report`, { responseType: 'blob' });
+                      const url = window.URL.createObjectURL(new Blob([res.data]));
+                      const link = document.createElement('a');
+                      link.href = url;
+                      link.setAttribute('download', `${selectedDept.name.replace(/\s+/g, '-')}-report.csv`);
+                      document.body.appendChild(link);
+                      link.click();
+                      link.parentNode?.removeChild(link);
+                      import('react-hot-toast').then(m => m.default.success('Report downloaded!'));
+                    } catch (err) {
+                      import('react-hot-toast').then(m => m.default.error('Failed to export report'));
+                    } finally {
+                      setExportingReport(false);
+                    }
+                  }}
+                >
+                  {exportingReport ? '⏳ Exporting...' : '📋 Export Department Report'}
+                </button>
               </div>
+
+              {/* Render AI Insights */}
+              <AnimatePresence>
+                {departmentInsights && (
+                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} style={{ marginTop: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    <div style={{ background: 'rgba(99, 102, 241, 0.08)', border: '1px solid rgba(99, 102, 241, 0.3)', borderRadius: '12px', padding: '1.25rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                        <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg, #10b981, #059669)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem', flexShrink: 0 }}>💪</div>
+                        <div>
+                          <h4 style={{ margin: '0 0 0.25rem 0', color: '#f1f5f9', fontSize: '0.95rem' }}>Team Strengths</h4>
+                          <ul style={{ margin: 0, paddingLeft: '1.2rem', color: '#e2e8f0', fontSize: '0.85rem', lineHeight: 1.5, listStyleType: 'disc', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                            {departmentInsights.teamStrengths?.map((s: string, i: number) => <li key={i}>{s}</li>) || <li>No data</li>}
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '12px', padding: '1.25rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                        <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg, #ef4444, #b91c1c)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem', flexShrink: 0 }}>⚠️</div>
+                        <div>
+                          <h4 style={{ margin: '0 0 0.25rem 0', color: '#f1f5f9', fontSize: '0.95rem' }}>Critical Gaps</h4>
+                          <ul style={{ margin: 0, paddingLeft: '1.2rem', color: '#e2e8f0', fontSize: '0.85rem', lineHeight: 1.5, listStyleType: 'disc', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                            {departmentInsights.criticalGaps?.map((g: string, i: number) => <li key={i}>{g}</li>) || <li>No data</li>}
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ background: 'rgba(139, 92, 246, 0.08)', border: '1px solid rgba(139, 92, 246, 0.3)', borderRadius: '12px', padding: '1.25rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                        <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem', flexShrink: 0 }}>📅</div>
+                        <div>
+                          <h4 style={{ margin: '0 0 0.5rem 0', color: '#f1f5f9', fontSize: '0.95rem' }}>90-Day Action Plan</h4>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                            {departmentInsights.ninetyDayPlan?.map((p: any, i: number) => (
+                              <div key={i} style={{ background: 'rgba(0,0,0,0.2)', padding: '0.75rem', borderRadius: '8px', borderLeft: '3px solid #8b5cf6' }}>
+                                <div style={{ fontWeight: 600, color: '#a5b4fc', fontSize: '0.75rem', textTransform: 'uppercase', marginBottom: '0.2rem' }}>{p.day || p.timeframe}</div>
+                                <div style={{ color: '#e2e8f0', fontSize: '0.85rem' }}>{p.action}</div>
+                              </div>
+                            )) || <div style={{ fontSize: '0.85rem', color: '#94a3b8' }}>No action plan generated.</div>}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
             </motion.div>
           </>
         )}

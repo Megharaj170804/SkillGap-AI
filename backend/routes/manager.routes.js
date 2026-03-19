@@ -17,7 +17,9 @@ router.get('/team-insights-cache', managerController.getTeamInsightsCache);
 router.get('/projects', managerController.getProjects);
 
 router.post('/projects', managerController.createProject);
+router.patch('/projects/:projectId/assign', managerController.assignEmployeesToProject);
 router.post('/nudge/:employeeId', managerController.sendNudge);
+
 
 router.put('/team-goal', managerController.setTeamGoal);
 

@@ -1,0 +1,5 @@
+{
+  "at": "2026-03-19T04:34:58.013Z",
+  "employeeId": "69b80a71eb5eb6c3788a3299",
+  "error": "AI quota exceeded. Please retry in 60 seconds."
+}
