@@ -48,6 +48,7 @@ const EmployeeModal = ({ employee, onClose, onSaved, roles }: any) => {
     department: employee?.department || '',
     currentRole: employee?.currentRole || '',
     targetRole: employee?.targetRole || '',
+    systemRole: '',
     skills: employee?.skills || [],
   });
   const [errors, setErrors] = useState<any>({});
@@ -62,6 +63,7 @@ const EmployeeModal = ({ employee, onClose, onSaved, roles }: any) => {
     if (!form.department) e.department = 'Department required';
     if (!form.currentRole) e.currentRole = 'Current role required';
     if (!form.targetRole) e.targetRole = 'Target role required';
+    if (!isEdit && !form.systemRole) e.systemRole = 'System role required';
     if (form.skills.length === 0) e.skills = 'At least 1 skill required';
 
     if (!isEdit && form.email && !e.email) {
@@ -79,7 +81,10 @@ const EmployeeModal = ({ employee, onClose, onSaved, roles }: any) => {
     setSaving(true);
     try {
       if (isEdit) {
-        await api.put(`/employees/${employee._id}`, { name: form.name, department: form.department, currentRole: form.currentRole, targetRole: form.targetRole, skills: form.skills });
+        // Only send systemRole if it was explicitly changed
+        const payload: any = { name: form.name, department: form.department, currentRole: form.currentRole, targetRole: form.targetRole, skills: form.skills };
+        if (form.systemRole) payload.systemRole = form.systemRole;
+        await api.put(`/employees/${employee._id}`, payload);
       } else {
         await api.post('/employees', form);
       }
@@ -139,6 +144,16 @@ const EmployeeModal = ({ employee, onClose, onSaved, roles }: any) => {
               {(roles || []).map((r: any) => <option key={r._id} value={r.roleName} style={{ background: '#1a1a2e' }}>{r.roleName}</option>)}
             </select>
             {errors.targetRole && <div style={errStyle}>{errors.targetRole}</div>}
+          </div>
+          <div>
+            <label style={labelStyle}>SYSTEM ROLE (PERMISSIONS)</label>
+            <select value={form.systemRole} onChange={(e) => setForm((f) => ({ ...f, systemRole: e.target.value }))} style={{ ...inputStyle, cursor: 'pointer' }}>
+              <option value="" style={{ background: '#1a1a2e' }}>{isEdit ? 'Leave unchanged' : 'Select permission level...'}</option>
+              <option value="employee" style={{ background: '#1a1a2e' }}>Employee (Standard access)</option>
+              <option value="manager" style={{ background: '#1a1a2e' }}>Manager (Team management)</option>
+              <option value="admin" style={{ background: '#1a1a2e' }}>Admin (Full system access)</option>
+            </select>
+            {errors.systemRole && <div style={errStyle}>{errors.systemRole}</div>}
           </div>
 
           {/* Skills */}

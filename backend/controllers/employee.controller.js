@@ -78,7 +78,7 @@ const getEmployeeById = async (req, res) => {
 // ─── POST /api/employees ───────────────────────────────────────────────────────
 const createEmployee = async (req, res) => {
   try {
-    const { name, email, password, department, currentRole, targetRole, skills, managerId } = req.body;
+    const { name, email, password, department, currentRole, targetRole, skills, managerId, systemRole } = req.body;
 
     // Email uniqueness
     const existing = await User.findOne({ email: email?.toLowerCase() }).lean();
@@ -88,7 +88,7 @@ const createEmployee = async (req, res) => {
     if (password) {
       const bcrypt = require('bcryptjs');
       const hashed = await bcrypt.hash(password, 10);
-      const newUser = await User.create({ name, email, password: hashed, role: 'employee', department });
+      const newUser = await User.create({ name, email, password: hashed, role: systemRole || 'employee', department });
       userId = newUser._id;
     }
 
@@ -143,12 +143,17 @@ const createEmployee = async (req, res) => {
 // ─── PUT /api/employees/:id ────────────────────────────────────────────────────
 const updateEmployee = async (req, res) => {
   try {
+    const { systemRole, ...updateData } = req.body;
     const employee = await Employee.findByIdAndUpdate(
       req.params.id,
-      { ...req.body, updatedAt: new Date(), lastActive: new Date() },
+      { ...updateData, updatedAt: new Date(), lastActive: new Date() },
       { new: true, runValidators: true }
     );
     if (!employee) return res.status(404).json({ message: 'Employee not found.' });
+
+    if (systemRole) {
+      await User.findOneAndUpdate({ employeeRef: employee._id }, { role: systemRole });
+    }
 
     // Recalculate gapScore
     const newScore = await computeGapScore(employee.toObject());
