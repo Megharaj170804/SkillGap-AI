@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import LearningPathCard from '../components/LearningPathCard';
+import { useSocket } from '../hooks/useSocket';
 
 interface SkillGap {
   skillName: string;
@@ -28,6 +29,14 @@ const LearningPath: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [totalWeeks, setTotalWeeks] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  useSocket({
+    events: {
+      skill_updated: () => setRefreshKey(k => k + 1),
+      learning_path_updated: () => setRefreshKey(k => k + 1),
+    }
+  });
 
   useEffect(() => {
     api.get(`/analysis/employee/${id}`)
@@ -39,7 +48,7 @@ const LearningPath: React.FC = () => {
       })
       .catch((err) => setError(err.response?.data?.message || 'Failed to load learning path.'))
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, refreshKey]);
 
   if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: '5rem' }}><div className="spinner" /></div>;
   if (error) return <div style={{ padding: '2rem', color: '#fca5a5', textAlign: 'center' }}>{error}</div>;
@@ -52,7 +61,7 @@ const LearningPath: React.FC = () => {
 
   return (
     <div style={{ padding: '2rem', maxWidth: '860px', margin: '0 auto' }}>
-      <button onClick={() => navigate(`/employees/${id}`)} className="btn-secondary" style={{ marginBottom: '1.5rem', padding: '0.4rem 1rem', fontSize: '0.85rem' }} id="back-btn">← Employee Detail</button>
+      <button onClick={() => navigate(-1)} className="btn-secondary" style={{ marginBottom: '1.5rem', padding: '0.4rem 1rem', fontSize: '0.85rem' }} id="back-btn">← Back</button>
 
       {/* Header */}
       <div className="glass-card" style={{ padding: '1.5rem', marginBottom: '2rem' }}>

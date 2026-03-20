@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useManagerSocket } from '../../hooks/useManagerSocket';
 import api from '../../services/api';
@@ -7,10 +8,12 @@ import toast from 'react-hot-toast';
 
 const ManagerOverview: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [stats, setStats] = useState<any>(null);
   const [team, setTeam] = useState<any[]>([]);
   const [activities, setActivities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showAllActivities, setShowAllActivities] = useState(false);
 
   const fetchDashboardData = async () => {
     try {
@@ -57,9 +60,12 @@ const ManagerOverview: React.FC = () => {
     }
   };
 
-  const handleAIPath = async (_employeeId: string) => {
-    // This could navigate to a detailed view or trigger an AI path generation
-    toast('AI Path functionality coming soon', { icon: 'ℹ️' });
+  const handleAIPath = async (_employeeId: string, status: string) => {
+    if (status === 'generated') {
+      navigate(`/employees/${_employeeId}/learning`);
+    } else {
+      navigate(`/ai/learning-path/${_employeeId}`);
+    }
   };
 
   if (loading || !stats) {
@@ -107,7 +113,7 @@ const ManagerOverview: React.FC = () => {
           <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.25rem', color: '#f1f5f9' }}>My Team Members</h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
             {team.map(member => (
-              <motion.div key={member._id} whileHover={{ y: -4 }} className="glass-card" style={{ padding: '1.25rem' }}>
+              <motion.div key={member._id} whileHover={{ y: -4 }} className="glass-card" style={{ padding: '1.25rem', cursor: 'pointer' }} onClick={() => navigate(`/employees/${member._id}`)}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
                   <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg, #6366f1, #06b6d4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '1.1rem' }}>
                     {member.avatar}
@@ -138,8 +144,8 @@ const ManagerOverview: React.FC = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1rem' }}>
                   <span style={{ fontSize: '0.7rem', color: '#64748b' }}>Active {member.lastActiveText}</span>
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button onClick={() => handleNudge(member._id)} style={{ background: 'transparent', border: '1px solid var(--border)', color: '#94a3b8', padding: '0.3rem 0.6rem', borderRadius: '6px', fontSize: '0.75rem', cursor: 'pointer' }}>Nudge</button>
-                    <button onClick={() => handleAIPath(member._id)} style={{ background: 'rgba(99, 102, 241, 0.1)', border: '1px solid rgba(99, 102, 241, 0.3)', color: '#a5b4fc', padding: '0.3rem 0.6rem', borderRadius: '6px', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 600 }}>{member.aiPathStatus === 'generated' ? 'View Path' : 'AI Path'}</button>
+                    <button onClick={(e) => { e.stopPropagation(); handleNudge(member._id); }} style={{ background: 'transparent', border: '1px solid var(--border)', color: '#94a3b8', padding: '0.3rem 0.6rem', borderRadius: '6px', fontSize: '0.75rem', cursor: 'pointer' }}>Nudge</button>
+                    <button onClick={(e) => { e.stopPropagation(); handleAIPath(member._id, member.aiPathStatus); }} style={{ background: 'rgba(99, 102, 241, 0.1)', border: '1px solid rgba(99, 102, 241, 0.3)', color: '#a5b4fc', padding: '0.3rem 0.6rem', borderRadius: '6px', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 600 }}>{member.aiPathStatus === 'generated' ? 'View Path' : 'AI Path'}</button>
                   </div>
                 </div>
               </motion.div>
@@ -175,7 +181,7 @@ const ManagerOverview: React.FC = () => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               {activities.length === 0 ? (
                 <div style={{ fontSize: '0.85rem', color: '#64748b' }}>No recent activity.</div>
-              ) : activities.map((act, i) => (
+              ) : activities.slice(0, showAllActivities ? 20 : 5).map((act, i) => (
                 <div key={i} style={{ display: 'flex', gap: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.75rem' }}>
                   <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '0.75rem', flexShrink: 0 }}>
                     {act.employeeAvatar || 'U'}
@@ -186,6 +192,11 @@ const ManagerOverview: React.FC = () => {
                   </div>
                 </div>
               ))}
+              {!showAllActivities && activities.length > 5 && (
+                <button onClick={() => setShowAllActivities(true)} style={{ background: 'transparent', border: '1px solid var(--border)', color: '#a5b4fc', padding: '0.5rem', borderRadius: '8px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, marginTop: '0.5rem' }}>
+                  See more activities ↓
+                </button>
+              )}
             </div>
           </div>
         </div>

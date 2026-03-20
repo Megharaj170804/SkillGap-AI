@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import SkillBar from '../components/SkillBar';
 import GapChart from '../components/GapChart';
+import { useSocket } from '../hooks/useSocket';
 
 interface Employee {
   _id: string;
@@ -30,6 +31,14 @@ const EmployeeDetail: React.FC = () => {
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  useSocket({
+    events: {
+      skill_updated: () => setRefreshKey(k => k + 1),
+      learning_path_updated: () => setRefreshKey(k => k + 1),
+    }
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -49,7 +58,7 @@ const EmployeeDetail: React.FC = () => {
       }
     };
     fetchData();
-  }, [id]);
+  }, [id, refreshKey]);
 
   if (loading) return <div style={{ display: 'flex', justifyContent: 'center', padding: '5rem' }}><div className="spinner" /></div>;
   if (error) return <div style={{ padding: '2rem', color: '#fca5a5', textAlign: 'center' }}>{error}</div>;

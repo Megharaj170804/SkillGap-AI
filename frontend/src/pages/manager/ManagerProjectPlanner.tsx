@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
@@ -12,6 +13,7 @@ const ManagerProjectPlanner: React.FC = () => {
   const [assignModal, setAssignModal] = useState<string | null>(null); // projectId being assigned
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([]);
   const [assigning, setAssigning] = useState(false);
+  const [availableSkills, setAvailableSkills] = useState<string[]>([]);
   const [newProject, setNewProject] = useState({ name: '', deadline: '', requiredSkills: '' });
 
   const fetchProjects = async () => {
@@ -35,9 +37,19 @@ const ManagerProjectPlanner: React.FC = () => {
     }
   };
 
+  const fetchSkills = async () => {
+    try {
+      const res = await api.get('/skills');
+      setAvailableSkills(res.data.map((s: any) => s.name));
+    } catch (err) {
+      console.error('Failed to fetch skills', err);
+    }
+  };
+
   useEffect(() => {
     fetchProjects();
     fetchTeam();
+    fetchSkills();
   }, []);
 
   const generateTrainingPlan = async (projectId: string) => {
@@ -223,10 +235,10 @@ const ManagerProjectPlanner: React.FC = () => {
             </div>
 
             {project.aiAnalysis && (
-              <div style={{ marginTop: '1.5rem', background: 'rgba(99, 102, 241, 0.08)', border: '1px solid rgba(99, 102, 241, 0.3)', padding: '1.25rem', borderRadius: '12px' }}>
-                <h4 style={{ margin: '0 0 1rem 0', color: '#a5b4fc', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span>📊</span> AI Training Plan Insight
-                </h4>
+              <details style={{ marginTop: '1.5rem', background: 'rgba(99, 102, 241, 0.08)', border: '1px solid rgba(99, 102, 241, 0.3)', padding: '1.25rem', borderRadius: '12px' }}>
+                <summary style={{ margin: '0 0 1rem 0', color: '#a5b4fc', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 600, outline: 'none', userSelect: 'none' }}>
+                  <span>📊</span> AI Training Plan Insight <span style={{ fontSize: '0.9rem', marginLeft: 'auto', color: '#6366f1' }}>▼</span>
+                </summary>
                 <p style={{ margin: '0 0 1rem 0', color: '#e2e8f0', fontSize: '0.9rem', lineHeight: 1.6 }}>
                   {project.aiAnalysis.projectReadiness}
                 </p>
@@ -252,7 +264,7 @@ const ManagerProjectPlanner: React.FC = () => {
                     </div>
                   </div>
                 )}
-              </div>
+              </details>
             )}
           </motion.div>
         ))}
@@ -317,6 +329,7 @@ const ManagerProjectPlanner: React.FC = () => {
                       <div>
                         <div style={{ fontWeight: 600, color: '#f1f5f9', fontSize: '0.9rem' }}>{emp.name}</div>
                         <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{emp.currentRole} · Readiness {emp.gapScore || 0}%</div>
+                        <div style={{ fontSize: '0.7rem', color: '#10b981', marginTop: '0.2rem', fontWeight: 600 }}>Top Skills: {(emp.topGaps && emp.topGaps.length > 0) ? emp.topGaps.join(', ') : 'No skills logged'}</div>
                       </div>
                     </div>
                   );
@@ -334,30 +347,73 @@ const ManagerProjectPlanner: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {/* ── CREATE PROJECT FORM ────────────────────────────────────────────── */}
-      {showCreate && (
-        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}
-          className="glass-card" style={{ marginTop: '2rem', padding: '2rem', border: '1px solid rgba(99, 102, 241, 0.3)' }}>
-          <h2 style={{ margin: '0 0 1.5rem 0', fontWeight: 700, color: '#f1f5f9' }}>Create New Project</h2>
-          <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
-            <div style={{ flex: 1, minWidth: '250px' }}>
-              <label style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 600, display: 'block', marginBottom: '0.4rem' }}>PROJECT NAME</label>
-              <input type="text" value={newProject.name} onChange={e => setNewProject({ ...newProject, name: e.target.value })} placeholder="e.g. Platform Migration" style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '0.7rem 1rem', color: '#f1f5f9', outline: 'none', boxSizing: 'border-box' }} />
-            </div>
-            <div style={{ flex: 1, minWidth: '200px' }}>
-              <label style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 600, display: 'block', marginBottom: '0.4rem' }}>DEADLINE</label>
-              <input type="date" value={newProject.deadline} onChange={e => setNewProject({ ...newProject, deadline: e.target.value })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '0.7rem 1rem', color: '#f1f5f9', outline: 'none', boxSizing: 'border-box', colorScheme: 'dark' }} />
-            </div>
-          </div>
-          <div style={{ marginTop: '1.5rem' }}>
-            <label style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 600, display: 'block', marginBottom: '0.4rem' }}>REQUIRED SKILLS (COMMA-SEPARATED)</label>
-            <input type="text" value={newProject.requiredSkills} onChange={e => setNewProject({ ...newProject, requiredSkills: e.target.value })} placeholder="e.g. React, Node.js, AWS" style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '0.7rem 1rem', color: '#f1f5f9', outline: 'none', boxSizing: 'border-box' }} />
-          </div>
-          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-start', marginTop: '1.5rem' }}>
-            <button onClick={handleCreateProject} className="btn-primary">Create Project</button>
-            <button onClick={() => setShowCreate(false)} className="btn-secondary">Cancel</button>
-          </div>
-        </motion.div>
+      {/* ── CREATE PROJECT MODAL ────────────────────────────────────────────── */}
+      {createPortal(
+        <AnimatePresence>
+          {showCreate && (
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(4px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}
+              onClick={e => { if (e.target === e.currentTarget) setShowCreate(false); }}
+            >
+              <motion.div
+                initial={{ scale: 0.92, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.92, opacity: 0 }}
+                className="glass-card" style={{ width: '100%', maxWidth: 550, padding: '2rem', border: '1px solid rgba(99, 102, 241, 0.3)' }}
+              >
+                <h2 style={{ margin: '0 0 1.5rem 0', fontWeight: 700, color: '#f1f5f9' }}>Create New Project</h2>
+                <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
+                  <div style={{ flex: 1, minWidth: '250px' }}>
+                    <label style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 600, display: 'block', marginBottom: '0.4rem' }}>PROJECT NAME</label>
+                    <input type="text" value={newProject.name} onChange={e => setNewProject({ ...newProject, name: e.target.value })} placeholder="e.g. Platform Migration" style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '0.7rem 1rem', color: '#f1f5f9', outline: 'none', boxSizing: 'border-box' }} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: '200px' }}>
+                    <label style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 600, display: 'block', marginBottom: '0.4rem' }}>DEADLINE</label>
+                    <input type="date" value={newProject.deadline} onChange={e => setNewProject({ ...newProject, deadline: e.target.value })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '0.7rem 1rem', color: '#f1f5f9', outline: 'none', boxSizing: 'border-box', colorScheme: 'dark' }} />
+                  </div>
+                </div>
+                
+                <div style={{ marginTop: '1.5rem' }}>
+                  <label style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 600, display: 'block', marginBottom: '0.4rem' }}>REQUIRED SKILLS ({newProject.requiredSkills ? newProject.requiredSkills.split(',').length : 0} selected)</label>
+                  {availableSkills.length === 0 ? (
+                    <div style={{ color: '#64748b', fontSize: '0.85rem' }}>Loading skills...</div>
+                  ) : (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', maxHeight: '180px', overflowY: 'auto', paddingRight: '0.5rem' }}>
+                      {availableSkills.map((s: string) => {
+                        const isSelected = newProject.requiredSkills.split(',').map(x=>x.trim()).includes(s);
+                        return (
+                          <button
+                            key={s}
+                            onClick={() => {
+                              let current = newProject.requiredSkills ? newProject.requiredSkills.split(',').map(x=>x.trim()).filter(Boolean) : [];
+                              if (isSelected) current = current.filter(x => x !== s);
+                              else current.push(s);
+                              setNewProject({ ...newProject, requiredSkills: current.join(', ') });
+                            }}
+                            style={{
+                              background: isSelected ? 'rgba(99, 102, 241, 0.9)' : 'rgba(255,255,255,0.05)',
+                              color: isSelected ? 'white' : '#cbd5e1',
+                              border: `1px solid ${isSelected ? '#8b5cf6' : 'rgba(255,255,255,0.1)'}`,
+                              padding: '0.4rem 0.85rem', borderRadius: '20px', fontSize: '0.75rem', fontWeight: isSelected ? 600 : 400,
+                              cursor: 'pointer', transition: 'all 0.1s'
+                            }}
+                          >
+                            {isSelected ? '✓ ' : ''}{s}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginTop: '2rem' }}>
+                  <button onClick={() => setShowCreate(false)} className="btn-secondary">Cancel</button>
+                  <button onClick={handleCreateProject} className="btn-primary">Create Project</button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
       )}
     </div>
   );

@@ -84,6 +84,12 @@ const analyzeEmployee = async (req, res) => {
     const totalRequired = roleDoc.requiredSkills.length;
     const gapScore = totalRequired > 0 ? Math.round((strongSkills.length / totalRequired) * 100) : 0;
 
+    // Save accurate real-time gapScore to DB for cross-referencing
+    if (employee.gapScore !== gapScore) {
+      employee.gapScore = gapScore;
+      await employee.save();
+    }
+
     // Sort by priority
     const priorityOrder = { critical: 1, important: 2, 'good-to-have': 3 };
     const sortByPriority = (a, b) => (priorityOrder[a.priority] || 4) - (priorityOrder[b.priority] || 4);

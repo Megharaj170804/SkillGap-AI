@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../hooks/useSocket';
+import toast from 'react-hot-toast';
 
 interface Notif {
   _id: string;
@@ -57,6 +58,10 @@ const NotificationBell: React.FC = () => {
       learning_path_updated: () => { loadNotifs(); },
       new_employee_added: () => { loadNotifs(); },
       team_alert: () => { loadNotifs(); },
+      nudge_received: (data: any) => { 
+        loadNotifs(); 
+        toast(`Learning Reminder: ${data.from} nudged you!`, { icon: '👋' });
+      },
     },
   });
 

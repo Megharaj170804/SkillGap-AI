@@ -80,7 +80,7 @@ const ManagerAIInsights: React.FC = () => {
                 <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg, #10b981, #059669)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', flexShrink: 0 }}>💪</div>
                 <div>
                   <h4 style={{ margin: '0 0 0.5rem 0', color: '#f1f5f9', fontSize: '1.05rem' }}>Team Strengths</h4>
-                  <ul style={{ margin: 0, paddingLeft: '1.2rem', color: '#e2e8f0', fontSize: '0.9rem', lineHeight: 1.6 }}>
+                  <ul style={{ margin: 0, paddingLeft: '1.2rem', color: '#e2e8f0', fontSize: '0.9rem', lineHeight: 1.6, listStyleType: 'disc', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                     {insight.teamStrengths?.map((s: string, i: number) => <li key={i}>{s}</li>) || <li>No data</li>}
                   </ul>
                 </div>
@@ -92,7 +92,7 @@ const ManagerAIInsights: React.FC = () => {
                 <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg, #ef4444, #b91c1c)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', flexShrink: 0 }}>⚠️</div>
                 <div>
                   <h4 style={{ margin: '0 0 0.5rem 0', color: '#f1f5f9', fontSize: '1.05rem' }}>Critical Gaps</h4>
-                  <ul style={{ margin: 0, paddingLeft: '1.2rem', color: '#e2e8f0', fontSize: '0.9rem', lineHeight: 1.6 }}>
+                  <ul style={{ margin: 0, paddingLeft: '1.2rem', color: '#e2e8f0', fontSize: '0.9rem', lineHeight: 1.6, listStyleType: 'disc', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                     {insight.criticalGaps?.map((g: string, i: number) => <li key={i}>{g}</li>) || <li>No data</li>}
                   </ul>
                 </div>
@@ -104,14 +104,14 @@ const ManagerAIInsights: React.FC = () => {
                 <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', flexShrink: 0 }}>📅</div>
                 <div>
                   <h4 style={{ margin: '0 0 0.5rem 0', color: '#f1f5f9', fontSize: '1.05rem' }}>90-Day Action Plan</h4>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <ul style={{ margin: 0, paddingLeft: '1.2rem', color: '#e2e8f0', fontSize: '0.9rem', lineHeight: 1.6, listStyleType: 'disc', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                     {insight.ninetyDayPlan?.map((p: any, i: number) => (
-                      <div key={i} style={{ background: 'rgba(0,0,0,0.2)', padding: '0.75rem', borderRadius: '8px', borderLeft: '3px solid #8b5cf6' }}>
-                        <div style={{ fontWeight: 600, color: '#a5b4fc', fontSize: '0.8rem', textTransform: 'uppercase', marginBottom: '0.2rem' }}>{p.day || p.timeframe}</div>
-                        <div style={{ color: '#e2e8f0', fontSize: '0.9rem' }}>{p.action}</div>
-                      </div>
-                    )) || <div>No action plan generated.</div>}
-                  </div>
+                      <li key={i}>
+                        <strong style={{ color: '#a5b4fc', textTransform: 'uppercase', marginRight: '0.3rem' }}>{p.day || p.timeframe}:</strong>
+                        {p.action}
+                      </li>
+                    )) || <li>No action plan generated.</li>}
+                  </ul>
                 </div>
               </div>
             </div>
@@ -122,7 +122,7 @@ const ManagerAIInsights: React.FC = () => {
                   <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg, #f59e0b, #b45309)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', flexShrink: 0 }}>👥</div>
                   <div>
                     <h4 style={{ margin: '0 0 0.5rem 0', color: '#f1f5f9', fontSize: '1.05rem' }}>Hiring Recommendations</h4>
-                    <ul style={{ margin: 0, paddingLeft: '1.2rem', color: '#e2e8f0', fontSize: '0.9rem', lineHeight: 1.6 }}>
+                    <ul style={{ margin: 0, paddingLeft: '1.2rem', color: '#e2e8f0', fontSize: '0.9rem', lineHeight: 1.6, listStyleType: 'disc', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                       {insight.hiringRecommendations.map((r: string, i: number) => <li key={i}>{r}</li>)}
                     </ul>
                   </div>

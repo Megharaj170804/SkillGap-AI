@@ -13,7 +13,7 @@ const ManagerReports: React.FC = () => {
 
   const handleGenerate = async (id: string, format: string) => {
     setGenerating(id);
-    const url = id === 'csv' ? '/manager/team-csv' : '/manager/team-summary';
+    const url = id === 'csv' ? '/manager/reports/team-csv' : '/manager/reports/team-summary';
     const mimeType = format === 'PDF' ? 'application/pdf' : 'text/csv';
     const ext = format.toLowerCase();
     

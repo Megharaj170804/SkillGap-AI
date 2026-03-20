@@ -4,13 +4,13 @@ const { verifyToken } = require('../middleware/auth.middleware');
 const { authorizeRoles } = require('../middleware/role.middleware');
 const skillController = require('../controllers/skill.controller');
 
-// All skill routes require login and admin role
-router.use(verifyToken, authorizeRoles('admin'));
+router.use(verifyToken);
 
-router.get('/', skillController.getAllSkills);
-router.get('/sync', skillController.syncSkills);
-router.post('/', skillController.createSkill);
-router.put('/rename', skillController.updateSkill);
-router.delete('/:name', skillController.deleteSkill);
+// Extract authorizeRoles from global apply and explicitly assign it
+router.get('/', authorizeRoles('admin', 'manager'), skillController.getAllSkills);
+router.get('/sync', authorizeRoles('admin'), skillController.syncSkills);
+router.post('/', authorizeRoles('admin'), skillController.createSkill);
+router.put('/rename', authorizeRoles('admin'), skillController.updateSkill);
+router.delete('/:name', authorizeRoles('admin'), skillController.deleteSkill);
 
 module.exports = router;

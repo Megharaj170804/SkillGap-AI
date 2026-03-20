@@ -121,10 +121,14 @@ const ManagerSkillCoverage: React.FC = () => {
       <div className="glass-card" style={{ padding: '1.5rem' }}>
         <h3 style={{ fontWeight: 600, marginBottom: '1.25rem' }}>Gap Priority Matrix</h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1rem' }}>
-          {skills.map((skill: string) => {
-            const avg = radarData.find((r: any) => r.subject === skill)?.value || 0;
-            const cs = cellColor(avg);
-            return (
+          {skills
+            .map((skill: string) => {
+              const avg = radarData.find((r: any) => r.subject === skill)?.value || 0;
+              const cs = cellColor(avg);
+              return { skill, avg, cs };
+            })
+            .sort((a: { avg: number }, b: { avg: number }) => a.avg - b.avg)
+            .map(({ skill, avg, cs }: { skill: string; avg: number; cs: any }) => (
               <div key={skill} style={{ background: cs.bg, border: `1px solid ${cs.color}30`, borderRadius: '10px', padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <div style={{ fontWeight: 700, color: '#f1f5f9' }}>{skill}</div>
@@ -132,8 +136,7 @@ const ManagerSkillCoverage: React.FC = () => {
                 </div>
                 {avg < 50 && <span style={{ background: 'rgba(239, 68, 68, 0.2)', color: '#fca5a5', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '0.2rem 0.5rem', borderRadius: '20px', fontSize: '0.7rem', fontWeight: 700 }}>Priority</span>}
               </div>
-            );
-          })}
+            ))}
         </div>
       </div>
     </div>
