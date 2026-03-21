@@ -6,7 +6,7 @@ import api from '../../services/api';
 import { useSocket, connectSocket } from '../../hooks/useSocket';
 
 const scoreColor = (n: number) => n >= 70 ? '#10b981' : n >= 40 ? '#f59e0b' : '#ef4444';
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : 'http://localhost:5000/api';
 
 /* ─── Toast ────────────────────────────────────────────────────── */
 let _toastId = 0;

@@ -150,7 +150,7 @@ useEffect(() => {
           <p style={{ color: '#94a3b8', margin: '0.25rem 0 0 0' }}>Company-wide platform health and metrics.</p>
         </div>
         <div style={{ display: 'flex', gap: '1rem' }}>
-          <button className="btn-secondary" onClick={() => window.open(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/export/company-report/pdf?token=${localStorage.getItem('token')}`)}>
+          <button className="btn-secondary" onClick={() => window.open(`${import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : 'http://localhost:5000/api'}/export/company-report/pdf?token=${localStorage.getItem('token')}`)}>
             📥 Generate Report
           </button>
           <button className="btn-primary" onClick={() => navigate('/admin/employees')}>+ Add Employee</button>
