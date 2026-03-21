@@ -126,7 +126,6 @@ useEffect(() => {
   };
 }, []);
 
-  const scoreColor = (n: number) => n >= 70 ? '#10b981' : n >= 40 ? '#f59e0b' : '#ef4444';
 
   const StatCard = ({ title, value, subtext, alert, flash }: any) => (
     <motion.div

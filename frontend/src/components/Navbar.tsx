@@ -130,24 +130,6 @@ const Navbar: React.FC = () => {
   );
 };
 
-const NavLink: React.FC<{ to: string; children: React.ReactNode; onClick?: () => void }> = ({ to, children, onClick }) => (
-  <Link to={to} onClick={onClick} style={{
-    color: '#94a3b8', textDecoration: 'none', padding: '0.4rem 0.75rem',
-    borderRadius: '8px', fontSize: '0.875rem', fontWeight: 500,
-    transition: 'all 0.2s', display: 'block'
-  }}
-  onMouseEnter={(e) => {
-    (e.target as HTMLElement).style.color = '#f1f5f9';
-    (e.target as HTMLElement).style.background = 'rgba(99, 102, 241, 0.1)';
-  }}
-  onMouseLeave={(e) => {
-    (e.target as HTMLElement).style.color = '#94a3b8';
-    (e.target as HTMLElement).style.background = 'transparent';
-  }}>
-    {children}
-  </Link>
-);
-
 const parseBadgeStyle = (role: string) => {
   const map: Record<string, React.CSSProperties> = {
     admin: { color: '#c4b5fd', backgroundColor: 'rgba(167, 139, 250, 0.1)', borderColor: 'rgba(167, 139, 250, 0.3)' },

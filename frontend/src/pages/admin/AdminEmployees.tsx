@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import api from '../../services/api';
 import { useSocket, connectSocket } from '../../hooks/useSocket';
 
@@ -192,7 +192,6 @@ const EmployeeModal = ({ employee, onClose, onSaved, roles }: any) => {
 
 /* ─── Main Component ───────────────────────────────────────────── */
 const AdminEmployees: React.FC = () => {
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [employees, setEmployees] = useState<any[]>([]);
   const [total, setTotal] = useState(0);

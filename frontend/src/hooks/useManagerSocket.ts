@@ -8,7 +8,7 @@ const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:5000', {
   autoConnect: false // Connect manually when needed
 });
 
-export const useManagerSocket = (managerId, department, onActivityUpdate, onStatsUpdate) => {
+export const useManagerSocket = (managerId: any, department: any, onActivityUpdate?: any, onStatsUpdate?: any) => {
   useEffect(() => {
     if (!managerId) return;
 
@@ -23,7 +23,7 @@ export const useManagerSocket = (managerId, department, onActivityUpdate, onStat
       socket.on("team_stats_updated", onStatsUpdate);
     }
 
-    const criticalAlertHandler = ({ employee }) => {
+    const criticalAlertHandler = ({ employee }: any) => {
       if (employee && employee.name) {
         toast.error(`⚠️ ${employee.name} dropped to critical gap score!`);
       }
