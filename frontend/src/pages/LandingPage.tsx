@@ -560,14 +560,7 @@ const LandingPage: React.FC = () => {
                 boxShadow: p.featured ? '0 20px 60px rgba(6,182,212,0.15)' : 'none',
                 position: 'relative',
               }}>
-                {p.featured && (
-                  <div style={{
-                    position: 'absolute', top: '1rem', right: '1rem',
-                    background: 'linear-gradient(135deg, #0891b2, #06b6d4)',
-                    borderRadius: '100px', padding: '0.2rem 0.75rem',
-                    fontSize: '0.7rem', fontWeight: 700, color: 'white',
-                  }}>Most Popular</div>
-                )}
+                
 
                 {/* Card header */}
                 <div style={{ background: p.gradient, padding: '1.75rem', textAlign: 'center' }}>
