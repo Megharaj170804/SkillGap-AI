@@ -837,6 +837,50 @@ exports.sendNudge = async (req, res) => {
     res.status(500).json({ message: 'Error sending nudge' });
   }
 };
+exports.getNudgeCount = async (req, res) => {
+  try {
+    const employeeId = req.params.employeeId;
+    if (!employeeId) return res.status(400).json({ message: 'employeeId required' });
+    const count = await NudgeLog.countDocuments({ employeeId });
+    res.json({ count });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error getting nudge count' });
+  }
+};
+
+exports.sendPraise = async (req, res) => {
+  try {
+    const managerId = req.user.id;
+    const { employeeId, message } = req.body;
+    if (!employeeId) return res.status(400).json({ message: 'employeeId required' });
+
+    const employee = await Employee.findById(employeeId);
+    if (!employee || employee.department !== req.user.department) {
+      return res.status(403).json({ message: 'Cannot praise employee outside your department.' });
+    }
+
+    const userForEmployee = await User.findOne({ employeeRef: employeeId }) || await User.findOne({ email: employee.email });
+    if (userForEmployee) {
+      const notification = new Notification({
+        userId: userForEmployee._id,
+        title: 'Praise from your Manager',
+        message: message || `${req.user.name || 'Your manager'} sent you praise.`,
+        type: 'praise',
+        isRead: false
+      });
+      await notification.save();
+
+      const io = req.app.get('io');
+      if (io) io.to(`user_${userForEmployee._id}`).emit('praise_received', { from: req.user.name || 'Manager' });
+    }
+
+    res.json({ success: true, message: 'Praise sent' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error sending praise' });
+  }
+};
 exports.setTeamGoal = async (req, res) => {
   try {
     const managerId = req.user.id;
@@ -872,6 +916,66 @@ exports.dismissAlert = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Error dismissing alert' });
+  }
+};
+
+exports.takeAlertAction = async (req, res) => {
+  try {
+    const managerId = req.user.id;
+    const alertId = req.params.alertId;
+    const { action } = req.body;
+    const ManagerAction = require('../models/ManagerAction');
+    await ManagerAction.create({ managerId, alertId, action, performedAt: new Date() });
+    res.json({ success: true, message: 'Alert action recorded' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error taking alert action' });
+  }
+};
+
+exports.setEmployeeGoal = async (req, res) => {
+  try {
+    const managerId = req.user.id;
+    const employeeId = req.params.employeeId;
+    const { weeklyGoalHours } = req.body;
+    if (!employeeId) return res.status(400).json({ message: 'employeeId required' });
+    if (typeof weeklyGoalHours !== 'number') return res.status(400).json({ message: 'weeklyGoalHours must be a number' });
+
+    const employee = await Employee.findById(employeeId);
+    if (!employee || employee.department !== req.user.department) return res.status(404).json({ message: 'Employee not found in your department.' });
+
+    await LearningProgress.updateOne({ employeeId }, { $set: { weeklyGoalHours } }, { upsert: true });
+    res.json({ success: true, message: 'Employee goal updated', weeklyGoalHours });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error setting employee goal' });
+  }
+};
+
+exports.shareAchievement = async (req, res) => {
+  try {
+    const managerId = req.user.id;
+    const { employeeId, title, description } = req.body;
+    if (!employeeId || !title) return res.status(400).json({ message: 'employeeId and title required' });
+
+    const employee = await Employee.findById(employeeId);
+    if (!employee || employee.department !== req.user.department) return res.status(404).json({ message: 'Employee not found in your department.' });
+
+    const achievement = new Achievement({ employeeId, title, description, earnedAt: new Date(), createdBy: managerId });
+    await achievement.save();
+
+    const userForEmployee = await User.findOne({ employeeRef: employeeId }) || await User.findOne({ email: employee.email });
+    if (userForEmployee) {
+      const notification = new Notification({ userId: userForEmployee._id, title: 'New achievement', message: `${title} - ${description || ''}`, type: 'achievement', isRead: false });
+      await notification.save();
+      const io = req.app.get('io');
+      if (io) io.to(`user_${userForEmployee._id}`).emit('achievement_shared', { achievementId: achievement._id });
+    }
+
+    res.status(201).json(achievement);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error sharing achievement' });
   }
 };
 
