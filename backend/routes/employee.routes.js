@@ -6,7 +6,7 @@ const {
   getMySkills, addSkill, updateSkill, removeSkill, submitSelfAssessment,
   getLearningPath, completeLearningWeek, skipLearningWeek, getSkillHistory, getLeaderboard,
   saveProjectAnalysis, getSavedProjects,
-  updateProfile, setWeeklyHours, updateNotificationPrefs, clearLearningPath
+  updateProfile, setWeeklyHours, updateNotificationPrefs, clearLearningPath, getCertificates
 } = require('../controllers/employee.controller');
 const { verifyToken } = require('../middleware/auth.middleware');
 const { authorizeRoles } = require('../middleware/role.middleware');
@@ -34,6 +34,8 @@ router.get('/leaderboard', verifyToken, authorizeRoles('employee', 'manager'), g
 
 router.get('/saved-projects', verifyToken, authorizeRoles('employee'), getSavedProjects);
 router.post('/saved-projects', verifyToken, authorizeRoles('employee'), saveProjectAnalysis);
+
+router.get('/certificates', verifyToken, authorizeRoles('employee'), getCertificates);
 
 router.put('/update-profile', verifyToken, authorizeRoles('employee'), updateProfile);
 router.put('/set-weekly-hours', verifyToken, authorizeRoles('employee'), setWeeklyHours);

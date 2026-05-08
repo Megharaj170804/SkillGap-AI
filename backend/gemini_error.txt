@@ -1,83 +1,161 @@
 [
   {
     "week": 1,
-    "title": "React Foundations: Components & State",
-    "focusSkill": "React",
-    "skillCategory": "Frontend",
-    "priority": "critical",
-    "overview": "This week focuses on the fundamental building blocks of React: JSX, components, props, and state management. You'll learn how to create reusable UI elements and manage their internal data.",
+    "title": "Advanced REST API Design & Best Practices",
+    "focusSkill": "REST APIs",
+    "skillCategory": "Backend",
+    "targetLevel": 4,
+    "currentLevel": 3,
     "weeklyGoalHours": 5,
+    "priority": "critical",
+    "overview": "This week focuses on solidifying REST API design principles and best practices beyond basic CRUD. You'll learn about proper status codes, idempotency, and how to structure robust APIs.",
     "dailyPlan": {
-      "monday": { "task": "Watch 'React Crash Course' Part 1 (JSX, Components)", "estimatedHours": 1 },
-      "tuesday": { "task": "Practice creating functional components and passing props", "estimatedHours": 1 },
-      "wednesday": { "task": "Watch 'React Crash Course' Part 2 (State, Event Handling)", "estimatedHours": 1 },
-      "thursday": { "task": "Implement basic state with `useState` hook and event handlers", "estimatedHours": 1 },
-      "friday": { "task": "Review concepts and start planning for the practice project", "estimatedHours": 1 }
+      "monday": { "task": "Watch video: REST API Design Principles", "estimatedHours": 1 },
+      "tuesday": { "task": "Review HTTP Status Codes & Idempotency concepts", "estimatedHours": 1 },
+      "wednesday": { "task": "Watch video: API Versioning and Pagination strategies", "estimatedHours": 1 },
+      "thursday": { "task": "Read about Request/Response Validation (Joi/Zod) and practice", "estimatedHours": 1 },
+      "friday": { "task": "Refactor a simple API endpoint to apply learned best practices", "estimatedHours": 1 }
     },
     "resources": [
       {
         "type": "video",
-        "title": "React JS Crash Course 2021",
+        "title": "REST API Design Best Practices",
         "platform": "YouTube",
-        "url": "https://www.youtube.com/watch?v=DqcHA-pL844",
-        "estimatedHours": 2.5,
+        "url": "https://www.youtube.com/watch?v=s5RjFp7a1bM",
+        "channel": "Academind",
+        "estimatedHours": 1.2,
+        "difficulty": "intermediate"
+      },
+      {
+        "type": "documentation",
+        "title": "MDN Web Docs: HTTP response status codes",
+        "platform": "MDN",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status",
+        "estimatedHours": 0.8,
         "difficulty": "beginner"
       },
       {
         "type": "article",
-        "title": "React Documentation: Main Concepts",
-        "platform": "React Official Docs",
-        "url": "https://react.dev/learn",
+        "title": "API Versioning: The Ultimate Guide",
+        "platform": "Nordic APIs",
+        "url": "https://nordicapis.com/api-versioning-the-ultimate-guide/",
+        "estimatedHours": 0.5,
+        "difficulty": "intermediate"
+      }
+    ],
+    "practiceProject": {
+      "title": "Refactor Existing Node.js API Endpoints",
+      "description": "Take a simple Node.js Express API (e.g., a basic CRUD for users) and refactor its endpoints to correctly use HTTP status codes, implement basic request validation, and add pagination to a GET all route.",
+      "estimatedHours": 2,
+      "githubSearchQuery": "express js api best practices pagination validation"
+    },
+    "weeklyCheckpoint": "You can design and refactor REST API endpoints using appropriate HTTP status codes, versioning, and basic validation.",
+    "keyConceptsCovered": ["HTTP Methods", "HTTP Status Codes", "Idempotency", "API Versioning", "Pagination", "Request/Response Validation"],
+    "nextWeekPreview": "Securing your REST APIs with authentication and authorization mechanisms like JWT."
+  },
+  {
+    "week": 2,
+    "title": "Securing REST APIs with Node.js",
+    "focusSkill": "REST APIs",
+    "skillCategory": "Backend",
+    "targetLevel": 4,
+    "currentLevel": 3,
+    "weeklyGoalHours": 5,
+    "priority": "critical",
+    "overview": "This week dives into essential security practices for your REST APIs. You'll learn about token-based authentication (JWT), basic authorization concepts, and common attack vectors like CORS and rate limiting.",
+    "dailyPlan": {
+      "monday": { "task": "Watch video: Introduction to API Security & Authentication", "estimatedHours": 1 },
+      "tuesday": { "task": "Follow video tutorial: JWT Authentication in Node.js (part 1)", "estimatedHours": 1 },
+      "wednesday": { "task": "Follow video tutorial: JWT Authentication in Node.js (part 2) & Authorization Middleware", "estimatedHours": 1 },
+      "thursday": { "task": "Understand and implement CORS and Rate Limiting in Express", "estimatedHours": 1 },
+      "friday": { "task": "Apply JWT authentication to an existing API endpoint", "estimatedHours": 1 }
+    },
+    "resources": [
+      {
+        "type": "video",
+        "title": "Node.js JWT Authentication Tutorial",
+        "platform": "YouTube",
+        "url": "https://www.youtube.com/watch?v=mbsmsi7l3a4",
+        "channel": "Web Dev Simplified",
         "estimatedHours": 1.5,
+        "difficulty": "intermediate"
+      },
+      {
+        "type": "documentation",
+        "title": "MDN Web Docs: Cross-Origin Resource Sharing (CORS)",
+        "platform": "MDN",
+        "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS",
+        "estimatedHours": 0.7,
+        "difficulty": "beginner"
+      },
+      {
+        "type": "video",
+        "title": "Rate Limiting in Node.js Express",
+        "platform": "YouTube",
+        "url": "https://www.youtube.com/watch?v=tQoY9iJjH_Y",
+        "channel": "The Net Ninja",
+        "estimatedHours": 0.8,
+        "difficulty": "intermediate"
+      }
+    ],
+    "practiceProject": {
+      "title": "Secure Express User API",
+      "description": "Implement JWT-based authentication for user registration and login endpoints in a Node.js Express API. Protect at least one endpoint (e.g., 'get user profile') with authorization middleware.",
+      "estimatedHours": 2,
+      "githubSearchQuery": "express js jwt authentication authorization"
+    },
+    "weeklyCheckpoint": "You can implement JWT-based authentication and basic authorization middleware in a Node.js REST API.",
+    "keyConceptsCovered": ["Authentication", "Authorization", "JSON Web Tokens (JWT)", "Middleware", "CORS", "Rate Limiting", "Bcrypt"],
+    "nextWeekPreview": "Beginning your journey with PostgreSQL, focusing on fundamental concepts and basic SQL queries."
+  },
+  {
+    "week": 3,
+    "title": "PostgreSQL Fundamentals - Data Types & Basic Queries",
+    "focusSkill": "PostgreSQL",
+    "skillCategory": "Data",
+    "targetLevel": 1,
+    "currentLevel": 0,
+    "weeklyGoalHours": 5,
+    "priority": "critical",
+    "overview": "This week introduces you to PostgreSQL, a powerful relational database. You'll learn how to set up a database, understand basic data types, and perform essential SQL operations like creating tables and inserting/selecting data.",
+    "dailyPlan": {
+      "monday": { "task": "Watch video: Introduction to Relational Databases & PostgreSQL setup", "estimatedHours": 1 },
+      "tuesday": { "task": "Practice SQL: CREATE TABLE statements and common Data Types", "estimatedHours": 1 },
+      "wednesday": { "task": "Practice SQL: INSERT data into tables", "estimatedHours": 1 },
+      "thursday": { "task": "Practice SQL: SELECT data with WHERE clause and basic operators", "estimatedHours": 1 },
+      "friday": { "task": "Mini-project: Design and create a simple database schema", "estimatedHours": 1 }
+    },
+    "resources": [
+      {
+        "type": "video",
+        "title": "PostgreSQL Tutorial for Beginners",
+        "platform": "YouTube",
+        "url": "https://www.youtube.com/watch?v=qw--VwX_l6w",
+        "channel": "freeCodeCamp.org",
+        "estimatedHours": 1.5,
+        "difficulty": "beginner"
+      },
+      {
+        "type": "course",
+        "title": "Learn SQL - Relational Database Course",
+        "platform": "freeCodeCamp.org",
+        "url": "https://www.freecodecamp.org/learn/relational-database/",
+        "estimatedHours": 2,
+        "difficulty": "beginner"
+      },
+      {
+        "type": "documentation",
+        "title": "PostgreSQL Official Documentation: Data Types",
+        "platform": "PostgreSQL",
+        "url": "https://www.postgresql.org/docs/current/datatype.html",
+        "estimatedHours": 0.5,
         "difficulty": "beginner"
       }
     ],
     "practiceProject": {
-      "title": "Simple Counter App with React",
-      "description": "Build a basic React application with a counter that can increment and decrement. Focus on state management and event handling.",
-      "estimatedHours": 1,
-      "githubSearchQuery": "react simple counter app"
+      "title": "Basic Student Database",
+      "description": "Create a PostgreSQL database. Define a 'students' table with columns like id (PK), first_name, last_name, email (unique), and enrollment_date. Insert at least 5 student records and write queries to select all students, and select students by last name.",
+      "estimatedHours": 2,
+      "githubSearchQuery": "postgresql create table insert select beginner"
     },
-    "weeklyCheckpoint": "You can create functional React components, pass props, and manage simple state using `useState`.",
-    "keyConceptsCovered": ["JSX", "Functional Components", "Props", "State", "useState Hook", "Event Handling"],
-    "nextWeekPreview": "Next week, we'll dive into more advanced React hooks like `useEffect` and introduce client-side routing with React Router."
-  },
-  {
-    "week": 2,
-    "title": "React Advanced: Hooks & Routing",
-    "focusSkill": "React",
-    "skillCategory": "Frontend",
-    "priority": "critical",
-    "overview": "This week expands on React fundamentals by introducing the `useEffect` hook for side effects and integrating React Router for navigation. You'll build a multi-page single-page application.",
-    "weeklyGoalHours": 5,
-    "dailyPlan": {
-      "monday": { "task": "Watch video on `useEffect` hook and its use cases", "estimatedHours": 1 },
-      "tuesday": { "task": "Implement data fetching with `useEffect` in a simple component", "estimatedHours": 1 },
-      "wednesday": { "task": "Watch 'React Router Tutorial' for navigation basics", "estimatedHours": 1 },
-      "thursday": { "task": "Set up React Router for basic page navigation in your project", "estimatedHours": 1 },
-      "friday": { "task": "Integrate all learned concepts into the practice project", "estimatedHours": 1 }
-    },
-    "resources": [
-      {
-        "type": "video",
-        "title": "React JS useEffect Hook Tutorial",
-        "platform": "YouTube",
-        "url": "https://www.youtube.com/watch?v=0ZJgVE1c10Y",
-        "estimatedHours": 1.0,
-        "difficulty": "intermediate"
-      },
-      {
-        "type": "video",
-        "title": "React Router Tutorial for Beginners",
-        "platform": "YouTube",
-        "url": "https://www.youtube.com/watch?v=Law7wfdg_ls",
-        "estimatedHours": 1.5,
-        "difficulty": "beginner"
-      },
-      {
-        "type": "article",
-        "title": "React Router Dom V6 Tutorial",
-        "platform": "FreeCodeCamp",
-        "url": "https://www.freecodecamp.org/news/react-router-dom-v6-tutorial/",
-        "estimatedHours": 1.0,
-        
+    "weeklyCheckpoint": "You can set up a PostgreSQL database, define tables with various data types, and perform basic CRUD operations (CREATE

@@ -155,7 +155,8 @@ exports.getMyTeam = async (req, res) => {
         lastActiveText = `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
       }
 
-      const topGaps = [...emp.skills].sort((a,b) => (b.proficiencyLevel || 0) - (a.proficiencyLevel || 0)).slice(0, 3).map(s => s.skillName);
+      const topGaps = emp.skills.slice(0, 3).map(s => s.skillName); // Replace with real gap logic if needed
+
       return {
         _id: emp._id,
         name: emp.name,
@@ -791,20 +792,10 @@ exports.sendNudge = async (req, res) => {
       return res.status(403).json({ message: 'Cannot nudge employee outside your department.' });
     }
 
-    // Check global limit: 5 nudges per 24 hours
+    // Check rate limit: 1 nudge per 24 hours
     const twentyFourHoursAgo = new Date();
     twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
 
-    const totalNudgesToday = await NudgeLog.countDocuments({
-      managerId,
-      sentAt: { $gte: twentyFourHoursAgo }
-    });
-
-    if (totalNudgesToday >= 5) {
-      return res.status(429).json({ message: 'You have reached your daily limit of 5 nudges.' });
-    }
-
-    // Check per-employee limit
     const recentNudge = await NudgeLog.findOne({
       managerId,
       employeeId,
@@ -812,7 +803,7 @@ exports.sendNudge = async (req, res) => {
     });
 
     if (recentNudge) {
-      return res.status(429).json({ message: 'Already nudged this employee today. Try again tomorrow.' });
+      return res.status(429).json({ message: 'Already nudged today. Try again tomorrow.' });
     }
 
     // Create a new NudgeLog

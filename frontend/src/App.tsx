@@ -173,7 +173,7 @@ const AppRoutes: React.FC = () => {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </>
-      } />
+      } />                                            
     </Routes>
   );
 };

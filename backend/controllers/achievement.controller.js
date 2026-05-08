@@ -15,6 +15,7 @@ const getAchievements = async (req, res) => {
         { id: 'streak_7', title: '7-Day Streak', description: 'Logged study sessions for 7 consecutive days!', icon: '🌟' },
         { id: 'path_generated', title: 'Pathfinder', description: 'Generated your first AI learning path.', icon: '🗺️' },
         { id: 'week_completed', title: 'Consistent Learner', description: 'Completed your first week in the learning path.', icon: '✅' },
+        { id: 'path_completed', title: 'Learning Path Completed', description: 'Successfully completed an entire AI learning path.', icon: '🎓' },
         { id: 'chat_expert', title: 'Curious Mind', description: 'Asked 5 questions to the AI Career Advisor.', icon: '💬' },
       ];
       return res.json({ earned: [], allBadges });
@@ -28,6 +29,7 @@ const getAchievements = async (req, res) => {
       { id: 'streak_7', title: '7-Day Streak', description: 'Logged study sessions for 7 consecutive days!', icon: '🌟' },
       { id: 'path_generated', title: 'Pathfinder', description: 'Generated your first AI learning path.', icon: '🗺️' },
       { id: 'week_completed', title: 'Consistent Learner', description: 'Completed your first week in the learning path.', icon: '✅' },
+      { id: 'path_completed', title: 'Learning Path Completed', description: 'Successfully completed an entire AI learning path.', icon: '🎓' },
       { id: 'chat_expert', title: 'Curious Mind', description: 'Asked 5 questions to the AI Career Advisor.', icon: '💬' },
     ];
     
@@ -57,6 +59,17 @@ const checkAchievements = async (req, res) => {
     // Check conditions
     if (employee.skills.length > 0 && !earnedIds.includes('first_skill')) {
       newAchievements.push({ employeeId, title: 'First Skill Added', badgeId: 'first_skill', description: 'Added your first skill to the platform.', icon: '🌱', earnedAt: new Date() });
+    }
+    if (employee.aiLearningPath && employee.aiLearningPath.length > 0 && !earnedIds.includes('path_generated')) {
+      newAchievements.push({ employeeId, title: 'Pathfinder', badgeId: 'path_generated', description: 'Generated your first AI learning path.', icon: '🗺️', earnedAt: new Date() });
+    }
+    const completedWeeksCount = employee.aiLearningPath ? employee.aiLearningPath.filter(w => w.status === 'completed').length : 0;
+    const totalWeeksCount = employee.aiLearningPath ? employee.aiLearningPath.length : 0;
+    if (completedWeeksCount > 0 && !earnedIds.includes('week_completed')) {
+      newAchievements.push({ employeeId, title: 'Consistent Learner', badgeId: 'week_completed', description: 'Completed your first week in the learning path.', icon: '✅', earnedAt: new Date() });
+    }
+    if (totalWeeksCount > 0 && completedWeeksCount === totalWeeksCount && !earnedIds.includes('path_completed')) {
+      newAchievements.push({ employeeId, title: 'Learning Path Completed', badgeId: 'path_completed', description: 'Successfully completed an entire AI learning path.', icon: '🎓', earnedAt: new Date() });
     }
     
     // Streaks (we just fetch stats or calculate here)

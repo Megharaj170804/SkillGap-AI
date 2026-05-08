@@ -19,11 +19,18 @@ router.get('/projects', managerController.getProjects);
 router.post('/projects', managerController.createProject);
 router.patch('/projects/:projectId/assign', managerController.assignEmployeesToProject);
 router.post('/nudge/:employeeId', managerController.sendNudge);
+router.get('/nudge-count/:employeeId', managerController.getNudgeCount);
+router.post('/send-praise', managerController.sendPraise);
 
 
 router.put('/team-goal', managerController.setTeamGoal);
 
 router.delete('/alerts/:alertId', managerController.dismissAlert);
+router.post('/alerts/:alertId/dismiss', managerController.dismissAlert);
+router.post('/alerts/:alertId/action', managerController.takeAlertAction);
+
+router.put('/employee-goal/:employeeId', managerController.setEmployeeGoal);
+router.post('/share-achievement', managerController.shareAchievement);
 
 // Reports
 router.get('/reports/team-summary', managerController.getTeamSummaryReport);

@@ -5,6 +5,7 @@ const achievementSchema = new mongoose.Schema({
   title: { type: String, required: true },
   description: { type: String },
   icon: { type: String, default: '🏆' },
+  badgeId: { type: String },
   earnedAt: { type: Date, default: Date.now }
 });
 

@@ -338,7 +338,6 @@ export default function EmployeeLearning() {
               const isExpanded = expandedWeek === weekNum;
               const isCompleted = w.status === 'completed';
               const isCurrent = w.status === 'in_progress';
-              const isUpcoming = w.status === 'upcoming';
 
               const ss = {
                 completed: { dot: '#10b981', badgeBg: 'rgba(16,185,129,0.1)', badgeCol: '#10b981', label: 'Completed ✅' },
@@ -436,18 +435,10 @@ export default function EmployeeLearning() {
                                         </div>
                                       </div>
                                       <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
-                                        {isUpcoming ? (
-                                          <span style={{ flex: 1, display: 'inline-block', textAlign: 'center', background: 'rgba(255,255,255,0.05)', color: '#64748b', padding: '0.4rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600, cursor: 'not-allowed', border: '1px solid rgba(255,255,255,0.1)' }}>
-                                            🔒 {resourceType === 'video' ? 'Watch' : resourceType === 'course' ? 'Open Course' : 'Read'} (Locked)
-                                          </span>
-                                        ) : (
-                                          <a href={resourceUrl} target="_blank" rel="noreferrer" style={{ flex: 1, textAlign: 'center', background: '#1d4ed8', color: '#fff', padding: '0.4rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', textDecoration: 'none', fontWeight: 600 }}>
-                                            {resourceType === 'video' ? '▶ Watch' : resourceType === 'course' ? '🎓 Open Course' : '📖 Read'}
-                                          </a>
-                                        )}
-                                        {isUpcoming ? (
-                                          <button disabled style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', color: '#475569', padding: '0.4rem 0.8rem', borderRadius: '4px', fontSize: '0.75rem', cursor: 'not-allowed', fontWeight: 600 }}>Mark Done</button>
-                                        ) : !done ? (
+                                        <a href={resourceUrl} target="_blank" rel="noreferrer" style={{ flex: 1, textAlign: 'center', background: '#1d4ed8', color: '#fff', padding: '0.4rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', textDecoration: 'none', fontWeight: 600 }}>
+                                          {resourceType === 'video' ? '▶ Watch' : resourceType === 'course' ? '🎓 Open Course' : '📖 Read'}
+                                        </a>
+                                        {!done ? (
                                           <button onClick={() => markResourceDone(weekNum, resourceTitle, r.estimatedHours || 1)} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(16,185,129,0.5)', color: '#34d399', padding: '0.4rem 0.8rem', borderRadius: '4px', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 600 }}>Mark Done</button>
                                         ) : (
                                           <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(16,185,129,0.2)', border: '1px solid #10b981', color: '#10b981', padding: '0.4rem 0.8rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600 }}>✓ Done</span>

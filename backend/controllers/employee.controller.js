@@ -989,6 +989,25 @@ const clearLearningPath = async (req, res) => {
   }
 };
 
+const getCertificates = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    const employeeId = user.employeeRef;
+    
+    if (!employeeId) {
+      return res.status(404).json({ message: 'Employee profile not linked.' });
+    }
+
+    const Certificate = require('../models/Certificate');
+    const certificates = await Certificate.find({ employeeId }).sort({ issuedAt: -1 }).lean();
+
+    return res.json(certificates);
+  } catch (err) {
+    console.error('getCertificates error:', err);
+    return res.status(500).json({ message: 'Server error fetching certificates.' });
+  }
+};
+
 module.exports = { 
   getAllEmployees, getEmployeeById, createEmployee, updateEmployee, deleteEmployee, checkEmail,
   getEmployeeStats, getWeeklyHours, getTodaysFocus, getStreak, setTargetRole,
@@ -996,5 +1015,5 @@ module.exports = {
   getLearningPath, completeLearningWeek, skipLearningWeek, getSkillHistory, getLeaderboard,
   saveProjectAnalysis, getSavedProjects,
   updateProfile, setWeeklyHours, updateNotificationPrefs, clearLearningPath,
-  calculateGapAnalysis
+  calculateGapAnalysis, getCertificates
 };

@@ -8,6 +8,7 @@ interface Advice {
   improvements?: string[];
   uniqueInsight?: string;
   motivationalMessage?: string;
+  shortTermAction?: string;
   error?: string;
 }
 
@@ -114,14 +115,26 @@ const EmployeeCareer: React.FC = () => {
             </div>
 
             {/* Improvements */}
-            <div className="glass-card" style={{ padding: '1.5rem', borderTop: '3px solid #f59e0b' }}>
+            <div className="glass-card" style={{ padding: '1.5rem', borderTop: '3px solid #f59e0b', display: 'flex', flexDirection: 'column' }}>
               <h3 style={{ fontWeight: 700, color: '#f59e0b', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>🎯 Areas to Improve</h3>
-              {advice.improvements && advice.improvements.length > 0 ? advice.improvements.map((s, i) => (
-                <div key={i} style={{ display: 'flex', gap: '0.75rem', marginBottom: '0.75rem', alignItems: 'flex-start' }}>
-                  <span style={{ color: '#f59e0b', flexShrink: 0 }}>→</span>
-                  <span style={{ color: '#e2e8f0', fontSize: '0.875rem' }}>{s}</span>
+              <div style={{ flex: 1 }}>
+                {advice.improvements && advice.improvements.length > 0 ? advice.improvements.map((s, i) => (
+                  <div key={i} style={{ display: 'flex', gap: '0.75rem', marginBottom: '0.75rem', alignItems: 'flex-start' }}>
+                    <span style={{ color: '#f59e0b', flexShrink: 0 }}>→</span>
+                    <span style={{ color: '#e2e8f0', fontSize: '0.875rem' }}>{s}</span>
+                  </div>
+                )) : <div style={{ color: '#94a3b8', fontSize: '0.85rem' }}>No immediate gaps detected!</div>}
+              </div>
+
+              {advice.shortTermAction && (
+                <div style={{ marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px dashed rgba(245, 158, 11, 0.3)' }}>
+                  <h4 style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#fbbf24', marginBottom: '0.5rem', fontWeight: 800 }}>Next 2-3 Days Action:</h4>
+                  <div style={{ background: 'rgba(245, 158, 11, 0.1)', padding: '0.875rem', borderRadius: '8px', border: '1px solid rgba(245, 158, 11, 0.2)', color: '#fde68a', fontSize: '0.875rem', lineHeight: 1.5, display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
+                    <span style={{ flexShrink: 0 }}>⚡</span>
+                    <span>{advice.shortTermAction}</span>
+                  </div>
                 </div>
-              )) : <div style={{ color: '#94a3b8', fontSize: '0.85rem' }}>No immediate gaps detected!</div>}
+              )}
             </div>
             
             {/* Motivational Message */}

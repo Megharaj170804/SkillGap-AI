@@ -26,7 +26,7 @@ Render is a great platform for hosting Node.js applications.
 4. **Set Environment Variables**:
    Scroll down to the "Environment Variables" section and click "Add Environment Variable". Add all the variables from your backend `.env` file. For example:
    - `PORT`: `5000`
-   - `MONGO_URI`: *<Your MongoDB Atlas Connection String>*
+   - `MONGODB_URI`: *<Your MongoDB Atlas Connection String>*
    - `JWT_SECRET`: *<Your Secret Key>*
    - `GEMINI_API_KEY`: *<Your Google Gemini API Key>*
    - `FRONTEND_URL`: *<Leave this blank for now, we will update it after deploying the frontend>*
