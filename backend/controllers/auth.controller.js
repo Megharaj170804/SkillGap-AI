@@ -46,12 +46,12 @@ const login = async (req, res) => {
     }
 
     const payload = { id: user._id, name: user.name, email: user.email, role: user.role, department: user.department };
-    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '7d' });
+    const token = jwt.sign(payload, process.env.JWT_SECRET); // No expiry — token lasts forever
 
-    // Set httpOnly cookie
+    // Set httpOnly cookie (10 years maxAge so it persists across browser sessions)
     res.cookie('token', token, {
       httpOnly: true,
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      maxAge: 10 * 365 * 24 * 60 * 60 * 1000, // ~10 years
       sameSite: 'lax',
     });
 
