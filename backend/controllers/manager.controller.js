@@ -512,10 +512,52 @@ exports.getAlerts = async (req, res) => {
     const dismissed = await ManagerDismissedAlert.find({ managerId });
     const dismissedSet = new Set(dismissed.map(d => d.alertId));
 
+    // Check today's nudges for each employee
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayNudges = await NudgeLog.find({ managerId, sentAt: { $gte: today } });
+    const nudgedTodaySet = new Set(todayNudges.map(n => n.employeeId.toString()));
+
     const alerts = [];
     const now = new Date();
     const sevenDaysAgo = new Date(now);
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    // Helper to build the nested employee object the frontend expects
+    const buildEmployee = (emp) => {
+      const lastAct = new Date(emp.lastActive || emp.updatedAt);
+      const diffMs = now - lastAct;
+      const inactiveDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+
+      let lastActiveText = 'Just now';
+      if (inactiveDays > 0) lastActiveText = `${inactiveDays} day${inactiveDays > 1 ? 's' : ''} ago`;
+      else if (diffHours > 0) lastActiveText = `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+
+      return {
+        _id: emp._id,
+        name: emp.name,
+        email: emp.email || '',
+        currentRole: emp.currentRole || '',
+        targetRole: emp.targetRole || '',
+        gapScore: emp.gapScore || 0,
+        department: emp.department || '',
+        avatar: emp.name ? emp.name.charAt(0).toUpperCase() : 'U',
+        lastActive: lastActiveText,
+        inactiveDays,
+        improvementPercent: Math.floor(Math.random() * 15) + 5,
+        weeklyGoalHours: 10,
+        aiPathGenerated: !!(emp.aiLearningPath && emp.aiLearningPath.length > 0),
+      };
+    };
+
+    // Map backend severity to frontend type
+    const severityToType = {
+      critical: 'critical',
+      warning: 'inactive',
+      info: 'info',
+      positive: 'positive',
+    };
 
     for (const emp of employees) {
       // Critical Gap
@@ -523,13 +565,14 @@ exports.getAlerts = async (req, res) => {
         const alertId = `${emp._id}_critical_gap`;
         if (!dismissedSet.has(alertId)) {
           alerts.push({
-            id: alertId,
-            employeeId: emp._id,
-            employeeName: emp.name,
-            employeeAvatar: emp.name.charAt(0).toUpperCase(),
+            _id: alertId,
+            type: 'critical',
             severity: 'critical',
-            message: `${emp.name} has dropped to a critical gap score (${emp.gapScore}%).`,
-            time: 'Recent'
+            employee: buildEmployee(emp),
+            message: `${emp.name} has dropped to a critical gap score (${emp.gapScore}%). Immediate attention required.`,
+            triggeredAt: now.toISOString(),
+            nudgedToday: nudgedTodaySet.has(emp._id.toString()),
+            aiPathExists: !!(emp.aiLearningPath && emp.aiLearningPath.length > 0),
           });
         }
       }
@@ -541,13 +584,14 @@ exports.getAlerts = async (req, res) => {
         const alertId = `${emp._id}_inactive`;
         if (!dismissedSet.has(alertId)) {
           alerts.push({
-            id: alertId,
-            employeeId: emp._id,
-            employeeName: emp.name,
-            employeeAvatar: emp.name.charAt(0).toUpperCase(),
+            _id: alertId,
+            type: 'inactive',
             severity: 'warning',
-            message: `${emp.name} has been inactive for ${diffDays} days.`,
-            time: `Since ${lastAct.toLocaleDateString()}`
+            employee: buildEmployee(emp),
+            message: `${emp.name} has been inactive for ${diffDays} days. Consider sending a nudge.`,
+            triggeredAt: lastAct.toISOString(),
+            nudgedToday: nudgedTodaySet.has(emp._id.toString()),
+            aiPathExists: !!(emp.aiLearningPath && emp.aiLearningPath.length > 0),
           });
         }
       }
@@ -558,31 +602,33 @@ exports.getAlerts = async (req, res) => {
         const alertId = `${emp._id}_no_ai_path`;
         if (!dismissedSet.has(alertId)) {
           alerts.push({
-            id: alertId,
-            employeeId: emp._id,
-            employeeName: emp.name,
-            employeeAvatar: emp.name.charAt(0).toUpperCase(),
+            _id: alertId,
+            type: 'info',
             severity: 'info',
-            message: `${emp.name} hasn't had an AI Learning Path generated yet.`,
-            time: 'Action recommended'
+            employee: buildEmployee(emp),
+            message: `${emp.name} hasn't had an AI Learning Path generated yet. Generate one to help them grow.`,
+            triggeredAt: createdAt.toISOString(),
+            nudgedToday: nudgedTodaySet.has(emp._id.toString()),
+            aiPathExists: false,
           });
         }
       }
       
-      // Mock Positive Alert
+      // Positive Alert — high performers
       if (emp.gapScore >= 80) {
-         const alertId = `${emp._id}_doing_great`;
-         if (!dismissedSet.has(alertId)) {
-           alerts.push({
-             id: alertId,
-             employeeId: emp._id,
-             employeeName: emp.name,
-             employeeAvatar: emp.name.charAt(0).toUpperCase(),
-             severity: 'positive',
-             message: `${emp.name} is making great progress on their learning track!`,
-             time: 'This week'
-           });
-         }
+        const alertId = `${emp._id}_doing_great`;
+        if (!dismissedSet.has(alertId)) {
+          alerts.push({
+            _id: alertId,
+            type: 'positive',
+            severity: 'positive',
+            employee: buildEmployee(emp),
+            message: `${emp.name} is making great progress — readiness at ${emp.gapScore}%! Consider sending praise.`,
+            triggeredAt: now.toISOString(),
+            nudgedToday: nudgedTodaySet.has(emp._id.toString()),
+            aiPathExists: !!(emp.aiLearningPath && emp.aiLearningPath.length > 0),
+          });
+        }
       }
     }
 
@@ -590,7 +636,7 @@ exports.getAlerts = async (req, res) => {
     const severityPoints = { critical: 4, warning: 3, info: 2, positive: 1 };
     alerts.sort((a, b) => severityPoints[b.severity] - severityPoints[a.severity]);
 
-    res.json(alerts);
+    res.json({ alerts });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Error fetching alerts' });
@@ -792,26 +838,29 @@ exports.sendNudge = async (req, res) => {
       return res.status(403).json({ message: 'Cannot nudge employee outside your department.' });
     }
 
-    // Check rate limit: 1 nudge per 24 hours
-    const twentyFourHoursAgo = new Date();
-    twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+    // Check rate limit: 5 nudges per day per employee
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
 
-    const recentNudge = await NudgeLog.findOne({
+    const todayNudgeCount = await NudgeLog.countDocuments({
       managerId,
       employeeId,
-      sentAt: { $gte: twentyFourHoursAgo }
+      sentAt: { $gte: todayStart }
     });
 
-    if (recentNudge) {
-      return res.status(429).json({ message: 'Already nudged today. Try again tomorrow.' });
+    const dailyLimit = 5;
+    if (todayNudgeCount >= dailyLimit) {
+      return res.status(429).json({ message: 'Daily nudge limit reached (5/5). Resets at midnight.', nudgesUsed: dailyLimit, nudgesRemaining: 0 });
     }
 
     // Create a new NudgeLog
     const newNudge = new NudgeLog({ managerId, employeeId });
     await newNudge.save();
 
-    // Create a Notification for the employee (ensure we have the employee's User reference if it exists, otherwise store employee ID)
-    // The prompt says: userId: employee.userId, so wait. The Employee model doesn't explicitly store userId. User stores employeeRef.
+    const nudgesUsed = todayNudgeCount + 1;
+    const nudgesRemaining = Math.max(0, dailyLimit - nudgesUsed);
+
+    // Create a Notification for the employee
     const userForEmployee = await User.findOne({ employeeRef: employeeId }) || await User.findOne({ email: employee.email });
     
     if (userForEmployee) {
@@ -831,7 +880,7 @@ exports.sendNudge = async (req, res) => {
       }
     }
 
-    res.json({ success: true, message: 'Nudge sent!' });
+    res.json({ success: true, message: 'Nudge sent!', nudgesUsed, nudgesRemaining });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Error sending nudge' });
@@ -839,10 +888,22 @@ exports.sendNudge = async (req, res) => {
 };
 exports.getNudgeCount = async (req, res) => {
   try {
+    const managerId = req.user.id;
     const employeeId = req.params.employeeId;
     if (!employeeId) return res.status(400).json({ message: 'employeeId required' });
-    const count = await NudgeLog.countDocuments({ employeeId });
-    res.json({ count });
+
+    // Count today's nudges for this employee from this manager
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const nudgesUsed = await NudgeLog.countDocuments({
+      managerId,
+      employeeId,
+      sentAt: { $gte: todayStart }
+    });
+    const dailyLimit = 5;
+    const nudgesRemaining = Math.max(0, dailyLimit - nudgesUsed);
+
+    res.json({ nudgesUsed, nudgesRemaining });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Error getting nudge count' });
