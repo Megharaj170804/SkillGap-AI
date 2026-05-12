@@ -1,10 +1,10 @@
 # SkillGap Platform Deployment Guide
 
-This guide provides step-by-step instructions for deploying the **SkillGap Platform**. We will deploy the **Backend on Render** (a free and easy-to-use cloud platform for Node.js) and the **Frontend on Vercel** (the best platform for React/Vite applications).
+This guide provides step-by-step instructions for deploying the **SkillGap Platform**. We will deploy both the **Backend** and the **Frontend on Render** — a free and easy-to-use cloud platform.
 
 ---
 
-## Part 1: Deploying the Backend on Render
+## Part 1: Deploying the Backend on Render (Web Service)
 
 Render is a great platform for hosting Node.js applications.
 
@@ -36,52 +36,67 @@ Render is a great platform for hosting Node.js applications.
 
 ---
 
-## Part 2: Deploying the Frontend on Vercel
+## Part 2: Deploying the Frontend on Render (Static Site)
 
-Vercel is optimized for frontend frameworks like Vite and React.
+Render also supports hosting static sites for free — perfect for a Vite/React frontend.
 
 ### Prerequisites
-1. Create a free account on [Vercel.com](https://vercel.com/) (you can sign up with GitHub).
+1. Use the same Render account you created above.
 2. Have your GitHub repository ready.
 
 ### Steps
-1. **Log in to Vercel** and click **"Add New..."** -> **"Project"**.
-2. **Import your GitHub repository** containing the SkillGap project.
-3. Configure the Project:
-   - **Project Name**: `skillgap-frontend` (or any name)
-   - **Framework Preset**: Vercel should automatically detect **Vite**. If not, select Vite from the dropdown.
-   - **Root Directory**: Click "Edit" and select the `frontend` folder. (⚠️ *Very Important*)
-4. **Configure Build and Output Settings**:
-   Leave these as default (Vercel knows how to handle Vite):
-   - Build Command: `npm run build`
-   - Output Directory: `dist`
-5. **Set Environment Variables**:
-   Open the "Environment Variables" dropdown. You need to link your frontend to the backend you just deployed.
-   - **Name**: `VITE_API_URL` (or whatever variable name your frontend uses for the backend API).
-   - **Value**: The Render backend URL you copied earlier (e.g., `https://skillgap-backend.onrender.com`).
-6. Click **"Deploy"**.
-7. Vercel will build and deploy your Vite application. Once done, you will get a Vercel URL (e.g., `https://skillgap-frontend.vercel.app`).
+1. **Log in to Render** and click on **"New +"** at the top right, then select **"Static Site"**.
+2. **Connect your GitHub repository** containing the SkillGap project.
+3. Configure the Static Site with the following details:
+   - **Name**: `skillgap-frontend` (or any name you prefer)
+   - **Branch**: `main` (or whichever branch you use)
+   - **Root Directory**: `frontend` (⚠️ *Very Important: since your frontend is in a subfolder*)
+   - **Build Command**: `npm install && npm run build`
+   - **Publish Directory**: `dist`
+4. **Set Environment Variables**:
+   Click on the "Environment" section and add the following variable so your frontend knows where the backend is:
+   - **Key**: `VITE_API_URL`
+   - **Value**: The Render backend URL you copied earlier (e.g., `https://skillgap-backend.onrender.com`)
+   - **Key**: `VITE_SOCKET_URL`
+   - **Value**: Same as above (e.g., `https://skillgap-backend.onrender.com`)
+5. **Add a Rewrite Rule (for React Router / SPA)**:
+   Since this is a Single Page Application (SPA) using React Router, you need to tell Render to redirect all paths to `index.html`.
+   - Go to the **"Redirects/Rewrites"** tab after the site is created.
+   - Add a new **Rewrite** rule:
+     - **Source**: `/*`
+     - **Destination**: `/index.html`
+     - **Action**: `Rewrite`
+   - This ensures that routes like `/dashboard`, `/login`, etc. work correctly when the user refreshes the page or navigates directly to a URL.
+6. Click **"Create Static Site"**.
+7. Render will build and deploy your Vite application. Once done, you will get a Render URL (e.g., `https://skillgap-frontend.onrender.com`).
+
+> **Note:** Render Static Sites are **completely free** (no spin-down like free Web Services). Your frontend will always be available instantly.
 
 ---
 
 ## Part 3: Final Integration (CORS Settings)
 
-Now that both are deployed, you need to tell your backend to accept requests from your new Vercel frontend.
+Now that both are deployed, you need to tell your backend to accept requests from your new Render frontend.
 
 1. Go back to your **Render dashboard**.
 2. Open your `skillgap-backend` web service.
 3. Go to the **Environment** tab.
 4. Update or add the `FRONTEND_URL` environment variable:
    - **Key**: `FRONTEND_URL`
-   - **Value**: Your Vercel frontend URL (e.g., `https://skillgap-frontend.vercel.app`). *Make sure there is no trailing slash (`/`) at the end.*
+   - **Value**: Your Render frontend URL (e.g., `https://skillgap-frontend.onrender.com`). *Make sure there is no trailing slash (`/`) at the end.*
 5. Save the changes. Render will automatically redeploy the backend with the new environment variable.
 
+---
+
 ## 🎉 Congratulations!
-Your SkillGap Platform is now live! 
+Your SkillGap Platform is now live!
 
-- **Frontend**: Accessible via your Vercel URL.
-- **Backend**: Hosted on Render and securely connected to your frontend.
+- **Frontend**: Accessible via your Render Static Site URL (e.g., `https://skillgap-frontend.onrender.com`).
+- **Backend**: Hosted as a Render Web Service and securely connected to your frontend.
 
-### Troubleshooting tips:
-- If the frontend cannot communicate with the backend, check the browser console (F12) for **CORS errors**. Make sure the `FRONTEND_URL` in Render matches your Vercel URL exactly.
-- Keep in mind that Render's free tier "spins down" the backend after 15 minutes of inactivity. When you open the frontend after a while, the first API request might take up to 50 seconds to complete while the backend wakes up.
+### Troubleshooting Tips
+- **CORS Errors**: If the frontend cannot communicate with the backend, check the browser console (F12) for CORS errors. Make sure the `FRONTEND_URL` in the backend's environment variables matches your frontend URL exactly (no trailing slash).
+- **404 on Page Refresh**: If you get a 404 error when refreshing a page like `/dashboard`, make sure you added the Rewrite rule (`/* → /index.html`) in the Static Site's Redirects/Rewrites tab.
+- **Backend Spin-Down**: Keep in mind that Render's free tier "spins down" the backend Web Service after 15 minutes of inactivity. The first API request after inactivity might take up to 50 seconds while the backend wakes up.
+- **Build Failures**: If the frontend build fails on Render, check that the `VITE_API_URL` environment variable is set correctly. Vite injects environment variables at **build time**, so they must be set before the build runs.
+- **TypeScript Errors**: If the build fails due to TypeScript errors, you can temporarily change the build command to `npm install && npx vite build` (skipping the `tsc` check) to get it deployed while you fix the errors locally.
